@@ -1,0 +1,83 @@
+{
+  "id": "sample_lesson_1",
+  "title": "Romanian Basics - Sample Lesson",
+  "description": "A sample lesson with 2 sentences for testing the Birkenbihl method",
+  "sentences": [
+    {
+      "id": "sentence_1",
+      "romanian": "Bună ziua, mă numesc Maria.",
+      "decode": "Good day, me call Maria.",
+      "english": "Good day, my name is Maria.",
+      "words": [
+        {
+          "rom": "Bună",
+          "decode": "Good",
+          "eng": "Good",
+          "status": "unknown"
+        },
+        {
+          "rom": "ziua,",
+          "decode": "day,",
+          "eng": "day,",
+          "status": "unknown"
+        },
+        {
+          "rom": "mă",
+          "decode": "me",
+          "eng": "my",
+          "status": "unknown"
+        },
+        {
+          "rom": "numesc",
+          "decode": "call",
+          "eng": "name",
+          "status": "unknown"
+        },
+        {
+          "rom": "Maria.",
+          "decode": "Maria.",
+          "eng": "Maria.",
+          "status": "known"
+        }
+      ],
+      "createdAt": "2025-01-23T09:00:00.000Z",
+      "lastModified": "2025-01-23T09:00:00.000Z"
+    },
+    {
+      "id": "sentence_2",
+      "romanian": "Eu locuiesc în București.",
+      "decode": "I live in Bucharest.",
+      "english": "I live in Bucharest.",
+      "words": [
+        {
+          "rom": "Eu",
+          "decode": "I",
+          "eng": "I",
+          "status": "known"
+        },
+        {
+          "rom": "locuiesc",
+          "decode": "live",
+          "eng": "live",
+          "status": "unknown"
+        },
+        {
+          "rom": "în",
+          "decode": "in",
+          "eng": "in",
+          "status": "known"
+        },
+        {
+          "rom": "București.",
+          "decode": "Bucharest.",
+          "eng": "Bucharest.",
+          "status": "known"
+        }
+      ],
+      "createdAt": "2025-01-23T09:00:00.000Z",
+      "lastModified": "2025-01-23T09:00:00.000Z"
+    }
+  ],
+  "createdAt": "2025-01-23T09:00:00.000Z",
+  "lastModified": "2025-01-23T09:00:00.000Z"
+}

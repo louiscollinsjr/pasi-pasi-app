@@ -41,6 +41,11 @@
 	},
 	"dependencies": {
 		"@fontsource-variable/jetbrains-mono": "^5.2.6",
-		"@fontsource-variable/roboto": "^5.2.6"
+		"@fontsource-variable/lora": "^5.2.6",
+		"@fontsource-variable/roboto": "^5.2.6",
+		"@fontsource/libre-baskerville": "^5.2.6",
+		"@fontsource/patrick-hand": "^5.2.6",
+		"@fontsource/patrick-hand-sc": "^5.2.6",
+		"phosphor-svelte": "^3.0.1"
 	}
 }

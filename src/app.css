@@ -4,15 +4,23 @@
 
 
 @import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/roboto';
+@import '@fontsource/libre-baskerville';
+@import '@fontsource-variable/lora';
+@import '@fontsource/patrick-hand';
+@import '@fontsource/patrick-hand-sc';
 
 /* Apply JetBrains Mono as the default font for the entire site */
 @layer base {
 	html {
-		font-family: 'JetBrains Mono Variable', monospace;
+		/* font-family: "Roboto Variable", monospace; */
 		/* Font smoothing for better readability */
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 		text-rendering: optimizeLegibility;
+	}
+	input, input[type="text"], input[type="search"], input[type="email"], input[type="password"] {
+		font-size: 1.5rem;
 	}
 }
 

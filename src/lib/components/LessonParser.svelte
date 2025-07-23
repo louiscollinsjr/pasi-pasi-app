@@ -57,19 +57,31 @@ Cultura română este bogată și diversă. Românii sunt cunoscuți pentru ospi
     parsedLesson = null;
   }
 
+  let saveStatus = '';
+
   function saveLesson() {
     if (!parsedLesson) return;
-    localStorage.removeItem('pasi_lessons'); // Clear old lessons
-    const lessons = [];
-    const meta = {
+    
+    // Get existing lessons or create empty array
+    const existingLessons = JSON.parse(localStorage.getItem('pasi_lessons') || '[]');
+    
+    const newLesson = {
       id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       title: parsedLesson.title,
       date: new Date().toISOString(),
       data: parsedLesson
     };
-    lessons.push(meta);
-    localStorage.setItem('pasi_lessons', JSON.stringify(lessons));
-    alert('Lesson saved!');
+    
+    // Add new lesson to existing lessons
+    existingLessons.push(newLesson);
+    localStorage.setItem('pasi_lessons', JSON.stringify(existingLessons));
+    
+    // Trigger sidebar refresh by dispatching custom event
+    window.dispatchEvent(new CustomEvent('lessonsUpdated'));
+    
+    // Show success message
+    saveStatus = 'Lesson saved successfully!';
+    setTimeout(() => saveStatus = '', 3000);
   }
 </script>
 
@@ -143,7 +155,7 @@ Cultura română este bogată și diversă. Românii sunt cunoscuți pentru ospi
                     <div class="flex flex-wrap gap-1">
                       {#each sentence.words as word}
                         <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                          {word}
+                          {typeof word === 'string' ? word : word.rom}
                         </span>
                       {/each}
                     </div>
@@ -158,7 +170,10 @@ Cultura română este bogată și diversă. Românii sunt cunoscuți pentru ospi
   {/if}
 
   {#if parsedLesson}
-    <div class="flex justify-end">
+    <div class="flex justify-end items-center gap-3">
+      {#if saveStatus}
+        <span class="text-sm text-green-600 font-medium">{saveStatus}</span>
+      {/if}
       <Button onclick={saveLesson} variant="default" class="mb-4">
         Save Lesson
       </Button>

@@ -6,6 +6,7 @@ export default {
       fontFamily: {
         sans: ['"JetBrains Mono Variable"', 'monospace'],
         mono: ['"JetBrains Mono Variable"', 'monospace'],
+        roboto: ['"Roboto Variable"', 'sans-serif'],
       },
     },
   },

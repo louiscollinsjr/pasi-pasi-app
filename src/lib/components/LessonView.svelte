@@ -98,7 +98,7 @@
                     on:click|stopPropagation={() => handleWordClick(`${paragraph.id}-${lIdx}-${wIdx}`)}
                   >
                     {#if showPronunciationGuide}
-                      {@const matches = findPronunciationMatches(word)}
+                      {@const matches = word.pronunciationMatches ?? findPronunciationMatches(word)}
                       {#if matches.length > 0}
                         <!-- Render word with aligned pronunciation annotations -->
                         <div class="inline-flex flex-col items-start">

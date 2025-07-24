@@ -21,18 +21,23 @@ România este o țară situată în sud-estul Europei. Capitala României este B
 
 Cultura română este bogată și diversă. Românii sunt cunoscuți pentru ospitalitatea lor. Mâncarea tradițională românească include sarmale, mici și papanași.`;
 
+  import { findPronunciationMatches } from '$lib/data/pronunciationGuide.js';
+
   function enrichParsedLesson(parsedLesson: ParsedLesson) {
     for (const paragraph of parsedLesson.paragraphs) {
       for (const sentence of paragraph.sentences) {
-        // If you have parallel arrays for eng/decode, align them here; fallback to empty string if not available
-        sentence.words = sentence.words.map((word: string, i: number) => ({
-          rom: word,
-          eng: sentence.eng ? sentence.eng[i] : '',
-          decode: sentence.decode ? sentence.decode[i] : '',
-          userInput: '',
-          aiTranslation: sentence.decode ? sentence.decode[i] : '',
-          known: false
-        }));
+        sentence.words = sentence.words.map((word: string, i: number) => {
+          const rom = typeof word === 'string' ? word : word.rom;
+          return {
+            rom,
+            eng: sentence.eng ? sentence.eng[i] : '',
+            decode: sentence.decode ? sentence.decode[i] : '',
+            userInput: '',
+            aiTranslation: sentence.decode ? sentence.decode[i] : '',
+            known: false,
+            pronunciationMatches: findPronunciationMatches(rom)
+          };
+        });
       }
     }
     return parsedLesson;

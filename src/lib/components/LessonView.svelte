@@ -93,22 +93,41 @@
                 <PopoverTrigger>
                   <button
                     type="button"
-                    class="select-text cursor-pointer px-1 font-libreBaskerville bg-transparent border-none p-0 m-0 text-[#367dc2] text-gray-800 text-[18px] relative"
+                    class="select-text cursor-pointer px-1 font-libreBaskerville font-patrickHandSc  bg-transparent border-none p-0 m-0 text-[#367dc2] text-gray-000 text-7xl relative"
                     style="text-decoration-line: none; text-decoration-color: {wordState[`${paragraph.id}-${lIdx}-${wIdx}`]?.known ? 'gray' : 'green'}; text-decoration-style: dotted; text-decoration-opacity: {wordState[`${paragraph.id}-${lIdx}-${wIdx}`]?.known ? 0.2: .5};"
                     on:click|stopPropagation={() => handleWordClick(`${paragraph.id}-${lIdx}-${wIdx}`)}
                   >
                     {#if showPronunciationGuide}
                       {@const matches = findPronunciationMatches(word)}
-                      <!-- Debug: log matches for testing -->
-                      {console.log('Word:', word, 'Matches:', matches)}
                       {#if matches.length > 0}
-                        <!-- Render word with pronunciation highlighting -->
-                        {#each word.split('') as char, charIdx}
-                          {@const matchForChar = matches.find(m => charIdx >= m.startIndex && charIdx <= m.endIndex)}
-                          <span class="{matchForChar ? 'bg-yellow-200 text-blue-800' : ''}">{char}</span>
-                        {/each}
+                        <!-- Render word with aligned pronunciation annotations -->
+                        <div class="inline-flex flex-col items-start">
+                          <!-- Word with highlighted letters -->
+                          <div class="flex">
+                            {#each word.split('') as char, charIdx}
+                              {#if matches.some(m => m.startIndex === charIdx)}
+                                {@const match = matches.find(m => m.startIndex === charIdx)}
+                                <span class="inline-flex flex-col items-center" style="flex: 0 0 auto; width: {match.endIndex - match.startIndex + 1}ch;">
+                                  <span class="flex">
+                                    {#each Array(match.endIndex - match.startIndex + 1) as _, i}
+                                      <span style="{match ? 'color: #FF2658;' : ''}">{word[charIdx + i]}</span>
+                                    {/each}
+                                  </span>
+                                  <span class="text-[10px] text-blue-600 font-patrickHandSc bg-blue-100 px-1 py-0.5 rounded mt-1 whitespace-nowrap text-center" style="display:inline-block;min-width:100%;">
+                                    {match.pronunciation}
+                                  </span>
+                                </span>
+                              {:else if !matches.some(m => charIdx > m.startIndex && charIdx <= m.endIndex)}
+                                <span class="inline-flex flex-col items-center">
+                                  <span>{char}</span>
+                                  <span class="text-[10px] mt-1 h-4"></span>
+                                </span>
+                              {/if}
+                            {/each}
+                          </div>
+                        </div>
                       {:else}
-                        <span style="background: pink;">{word}</span>
+                        {word}
                       {/if}
                     {:else}
                       {word}
@@ -132,18 +151,6 @@
               </Popover>
               {#if wordState[`${paragraph.id}-${lIdx}-${wIdx}`]?.translation}
                 <span class="block text-[12px] text-gray-400 my-1 font-libreBaskerville font-bold tracking-wide">{wordState[`${paragraph.id}-${lIdx}-${wIdx}`].translation}</span>
-              {/if}
-              
-              <!-- Pronunciation guide annotations -->
-              {#if showPronunciationGuide}
-                {@const matches = findPronunciationMatches(word)}
-                {#if matches.length > 0}
-                  <div class="flex gap-1 mt-1 text-[10px] text-blue-600 font-mono uppercase tracking-wider">
-                    {#each matches as match}
-                      <span class="bg-blue-100 px-1 py-0.5 rounded">{match.pronunciation}</span>
-                    {/each}
-                  </div>
-                {/if}
               {/if}
             </span>
             {' '}

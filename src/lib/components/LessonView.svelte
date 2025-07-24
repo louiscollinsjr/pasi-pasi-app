@@ -64,7 +64,7 @@
   }
 </script>
 
-<div class="w-full max-w-3xl mx-auto p-4">
+<div class="w-full max-w-4xl mx-auto p-4">
   <div class="flex justify-between items-center mb-4">
     <h2 class="font-normal text-gray-600 font-roboto text-lg">{lesson.title}</h2>
     <div class="flex items-center gap-2">
@@ -93,7 +93,7 @@
                 <PopoverTrigger>
                   <button
                     type="button"
-                    class="select-text cursor-pointer px-1 font-libreBaskerville font-patrickHandSc  bg-transparent border-none p-0 m-0 text-[#367dc2] text-gray-000 text-7xl relative"
+                    class="select-text cursor-pointer px-1 font-libreBaskerville font-patrickHandSc font-normal  bg-transparent border-none p-0 m-0 text-[#367dc2] text-gray-000 text-7xl relative"
                     style="text-decoration-line: none; text-decoration-color: {wordState[`${paragraph.id}-${lIdx}-${wIdx}`]?.known ? 'gray' : 'green'}; text-decoration-style: dotted; text-decoration-opacity: {wordState[`${paragraph.id}-${lIdx}-${wIdx}`]?.known ? 0.2: .5};"
                     on:click|stopPropagation={() => handleWordClick(`${paragraph.id}-${lIdx}-${wIdx}`)}
                   >
@@ -113,7 +113,7 @@
                                       <span style="{match ? 'color: #FF2658;' : ''}">{word[charIdx + i]}</span>
                                     {/each}
                                   </span>
-                                  <span class="text-[10px] text-blue-600 font-patrickHandSc bg-blue-100 px-1 py-0.5 rounded mt-1 whitespace-nowrap text-center" style="display:inline-block;min-width:100%;">
+                                  <span class="text-3xl text-[#367dc2] font-patrickHandSc bg-blue-000 px-1 py-0.5 rounded mt-1 whitespace-nowrap text-center" style="display:inline-block;min-width:100%;">
                                     {match.pronunciation}
                                   </span>
                                 </span>

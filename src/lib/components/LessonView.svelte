@@ -64,7 +64,7 @@
   }
 </script>
 
-<div class="w-full max-w-4xl mx-auto p-4">
+<div class="w-full max-w-[1440px] mx-auto p-4">
   <div class="flex justify-between items-center mb-4">
     <h2 class="font-normal text-gray-600 font-roboto text-lg">{lesson.title}</h2>
     <div class="flex items-center gap-2">

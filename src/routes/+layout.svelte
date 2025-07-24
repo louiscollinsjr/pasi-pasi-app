@@ -5,6 +5,10 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
+  import Navbar from '$lib/components/Navbar.svelte';
+  import AppSidebar from '$lib/components/AppSidebar.svelte';
+  import LessonView from '$lib/components/LessonView.svelte';
+  import { FilePlus, Files, Gear, Export, PencilSimple, Archive, Trash } from 'phosphor-svelte';
 
   let sidebarOpen = false;
   let lessons = [];
@@ -60,25 +64,15 @@ onMount(() => {
   };
 });
 
-  import { FilePlus, Files, Gear, Export, PencilSimple, Archive, Trash } from 'phosphor-svelte';
-  import AppSidebar from '$lib/components/AppSidebar.svelte';
+  let menu = [
+    { label: 'New lesson', icon: FilePlus, action: () => {goto('/parser')} },
+    { label: 'Library', icon: Files, action: () => {} },
+    { label: 'Settings', icon: Gear, action: () => {} },
+  ];
 
-let menu = [
-  { label: 'New lesson', icon: FilePlus, action: () => {goto('/parser')} },
-  { label: 'Library', icon: Files, action: () => {} },
-  { label: 'Settings', icon: Gear, action: () => {} },
-];
-
-  // Responsive sidebar toggle
-  let isMobile = false;
-  onMount(() => {
-    const checkMobile = () => {
-      isMobile = window.innerWidth < 768;
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  });
+  function toggleSidebar() {
+    sidebarOpen = !sidebarOpen;
+  }
 </script>
 
 <svelte:head>
@@ -87,29 +81,32 @@ let menu = [
   </style>
 </svelte:head>
 
-<div class="flex min-h-screen bg-background font-roboto text-xs">
+<div class="min-h-screen bg-white">
+  <!-- Static Navbar -->
+  <Navbar {toggleSidebar} {sidebarOpen} />
+  
+  <!-- Sidebar -->
   <AppSidebar
-    isMobile={isMobile}
-    sidebarOpen={sidebarOpen}
+    {sidebarOpen}
     setSidebarOpen={v => sidebarOpen = v}
-    menu={menu}
-    lessons={lessons}
-    selectedLesson={selectedLesson}
+    {menu}
+    {lessons}
+    {selectedLesson}
     setSelectedLesson={l => selectedLesson = l}
-    openMenuIdx={openMenuIdx}
+    {openMenuIdx}
     setOpenMenuIdx={v => openMenuIdx = v}
-    deleteLesson={deleteLesson}
-    Export={Export}
-    PencilSimple={PencilSimple}
-    Archive={Archive}
-    Trash={Trash}
-    Sheet={Sheet}
-    Button={Button}
+    {deleteLesson}
+    {Export}
+    {PencilSimple}
+    {Archive}
+    {Trash}
+    {Sheet}
+    {Button}
   />
 
   <!-- Main content area -->
-  <main class="flex-1 flex flex-col items-center overflow-y-auto">
-    <div class="w-full max-w-6xl px-4 py-8">
+  <main class="pt-16 transition-all duration-300 ease-in-out {sidebarOpen ? 'ml-64' : 'ml-0'}">
+    <div class="max-w-6xl mx-auto px-4 py-8">
       {#if selectedLesson}
         <LessonView lesson={selectedLesson} />
       {:else}

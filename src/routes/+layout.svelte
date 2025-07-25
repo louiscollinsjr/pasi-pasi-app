@@ -133,8 +133,8 @@ onMount(() => {
   />
 
   <!-- Main content area -->
-  <main class="pt-16 transition-all duration-300 ease-in-out {$sidebarOpen ? 'ml-64' : 'ml-0'}">
-    <div class="max-w-6xl mx-auto px-4 py-8">
+  <main class="pt-16 transition-all duration-300 ease-in-out {$sidebarOpen ? 'md:ml-64 transform md:transform-none' : 'ml-0'} {$sidebarOpen ? 'md:translate-x-0 translate-x-64' : 'translate-x-0'}">
+    <div class="max-w-6xl mx-auto px-4 py-8 {$sidebarOpen ? 'md:min-w-0 min-w-full' : 'min-w-0'}">
       {#if selectedLesson}
         <LessonView lesson={selectedLesson} />
       {:else}

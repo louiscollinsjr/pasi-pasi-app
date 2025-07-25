@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Plus, FileText, Search } from 'lucide-svelte';
+	import { Add, FileText, Search } from 'lucide-svelte';
 	import CollectionCard from '$lib/components/CollectionCard.svelte';
 	import CreateCollectionModal from '$lib/components/CreateCollectionModal.svelte';
 	import EmptyLibraryState from '$lib/components/EmptyLibraryState.svelte';
@@ -182,15 +182,15 @@
 			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
 				<div>
 					<h1 class="text-3xl font-medium text-gray-900">Your Library</h1>
-					<p class="text-gray-500 mt-2 text-lg">Organize and access your Romanian learning materials</p>
+					<p class="text-gray-500 mt-2 text-lg">Organize and access your lessons and stories</p>
 				</div>
 				
 				<!-- Create Collection Button -->
 				<button
 					on:click={openCreateModal}
-					class="inline-flex items-center gap-3 px-6 py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-lg hidden sm:block"
+					class="hidden sm:inline-flex items-center gap-3 px-6 py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-lg"
 				>
-					<Plus size={18} />
+					<Add size={18} />
 					<span class="hidden sm:inline">Create Collection</span>
 				</button>
 			</div>
@@ -308,7 +308,7 @@
 		class="fixed bottom-8 right-8 w-16 h-16 bg-black hover:bg-gray-800 text-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center sm:hidden z-40"
 		aria-label="Create new collection"
 	>
-		<Plus size={28} />
+		<Add size={28} />
 	</button>
 
 	<!-- Create Collection Modal -->

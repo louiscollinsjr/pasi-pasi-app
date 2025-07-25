@@ -153,26 +153,25 @@
 <!-- Header Section -->
 <div class="border-b border-gray-100 bg-white">
   <div class="container mx-auto px-6 py-8">
-    <div class="flex items-center gap-6 mb-6">
-      <a 
-        href={collection ? `/library/collections/${collection.id}` : '/library'} 
-        class="p-3 hover:bg-gray-50 rounded-xl transition-colors"
-        aria-label="Back to {collection ? 'collection' : 'library'}"
-      >
-        <ArrowLeft size={24} class="text-gray-400" />
-      </a>
-      <div class="flex-1">
-        <div class="flex items-center gap-3 mb-2">
-          {#if collection}
-            <a href="/library/collections/{collection.id}" class="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-              {collection.title}
-            </a>
-            <span class="text-gray-300">/</span>
-          {/if}
-          <div class="p-2 bg-gray-50 rounded-lg">
-            <BookOpen size={16} class="text-gray-400" />
-          </div>
+    <div class="mb-6">
+      <!-- Breadcrumb Navigation -->
+      <div class="flex items-center gap-3 mb-4">
+        <a href="/library" class="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+          Library
+        </a>
+        {#if collection}
+          <span class="text-gray-300">/</span>
+          <a href="/library/collections/{collection.id}" class="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+            {collection.title}
+          </a>
+        {/if}
+        <span class="text-gray-300">/</span>
+        <div class="p-1.5 bg-gray-50 rounded-lg">
+          <BookOpen size={14} class="text-gray-400" />
         </div>
+      </div>
+      
+      <div class="flex-1">
         <h1 class="text-3xl font-medium text-gray-900 break-words">{lesson.title}</h1>
         
         <!-- Lesson Metrics -->

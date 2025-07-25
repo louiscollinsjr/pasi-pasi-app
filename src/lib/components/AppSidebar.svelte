@@ -2,6 +2,9 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { X } from 'phosphor-svelte';
+  import Button from '$lib/components/ui/button/button.svelte';
+  import { user as userStore } from '$lib/stores/userStore';
+  import { supabase } from '$lib/supabaseClient';
 
   export let sidebarOpen = false;
   export let menu = [];
@@ -19,9 +22,17 @@
   export let Archive;
   export let Trash;
   export let Sheet;
-  export let Button;
 
   let deleteConfirmIdx = null;
+
+  async function logout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error logging out:', error);
+    } else {
+      await goto('/login');
+    }
+  }
 
   function handleMenuClick(event, label) {
     event.preventDefault();
@@ -41,7 +52,7 @@
 
 <!-- Sidebar overlay for mobile -->
 {#if sidebarOpen}
-  <div class="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden" on:click={closeSidebar}></div>
+  <div class="fixed inset-0 z-40 backdrop-blur-sm md:hidden" on:click={closeSidebar}></div>
 {/if}
 
 <!-- Sidebar -->
@@ -49,14 +60,14 @@
   <div class="flex flex-col h-full">
     <!-- Close button for mobile -->
     <div class="flex items-center justify-between p-4 md:hidden">
-      <span class="text-lg font-semibold text-gray-900">Menu</span>
+      <!-- <span class="text-lg font-semibold text-gray-900">Menu</span>
       <button 
         class="p-2 hover:bg-gray-100 rounded-md transition-colors"
         on:click={closeSidebar}
         aria-label="Close sidebar"
       >
         <X size={20} class="text-gray-600" />
-      </button>
+      </button> -->
     </div>
 
     <!-- Navigation content -->
@@ -155,11 +166,24 @@
       {/if}
     </nav>
 
-    <!-- User info at bottom -->
-    <!-- <div class="p-4 border-t border-gray-200">
-      <div class="text-sm text-gray-600">
-        Louis Collins
-      </div>
-    </div> -->
+    <!-- Mobile login/logout section at bottom -->
+    <div class="md:hidden mt-auto pt-6 pb-8">
+      {#if $userStore}
+        <div class="space-y-3">
+          <div class="text-sm text-gray-600">
+            Signed in as <span class="font-medium">{$userStore.email}</span>
+          </div>
+          <Button on:click={logout} variant="outline" size="sm" class="w-3/4 mx-auto">
+            Log out
+          </Button>
+        </div>
+      {:else}
+        <a href="/login" 
+           class="block w-3/4 mx-auto text-center text-base rounded-full font-medium bg-gray-100 text-black px-6 py-3 focus:outline-none focus:ring-2 focus:ring-primary transition-colors hover:bg-gray-200"
+           on:click={closeSidebar}>
+          Log in
+        </a>
+      {/if}
+    </div>
   </div>
 </aside>

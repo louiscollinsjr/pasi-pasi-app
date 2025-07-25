@@ -11,6 +11,7 @@ export default {
         libreBaskerville: ['"Libre Baskerville"', 'sans-serif'],
         patrickHand: ['"Patrick Hand"', 'sans-serif'],
         patrickHandSc: ['"Patrick Hand SC"', 'sans-serif'],
+        mansalva: ['"Mansalva"', 'sans-serif'],
       },
     },
   },

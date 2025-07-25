@@ -22,8 +22,8 @@
   <div class="flex items-center justify-between px-4 sm:px-12 py-6">
     <!-- Left side: Logo and sidebar toggle -->
     <div class="flex items-center gap-10">
-      <a href="/" class="text-3xl font-semibold text-gray-900 hover:text-gray-700 transition-colors">
-        Pași-Pași
+      <a href="/" class="text-5xl font-semibold text-gray-900 hover:text-gray-700 transition-colors font-mansalva">
+        Leo&Finn
       </a>
       
       <button 
@@ -71,3 +71,9 @@
     </div>
   </div>
 </nav>
+
+<style>
+  .font-mansalva {
+    font-family: 'Mansalva', sans-serif;
+  }
+</style>

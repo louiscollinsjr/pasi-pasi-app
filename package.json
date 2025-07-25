@@ -44,6 +44,7 @@
 		"@fontsource-variable/lora": "^5.2.6",
 		"@fontsource-variable/roboto": "^5.2.6",
 		"@fontsource/libre-baskerville": "^5.2.6",
+		"@fontsource/mansalva": "^5.2.6",
 		"@fontsource/patrick-hand": "^5.2.6",
 		"@fontsource/patrick-hand-sc": "^5.2.6",
 		"@supabase/supabase-js": "^2.52.1",

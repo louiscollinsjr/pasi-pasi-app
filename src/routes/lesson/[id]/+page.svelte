@@ -2,7 +2,7 @@
   import LessonView from '$lib/components/LessonView.svelte';
   export let data;
 
-  $: ({ lesson, error } = data);
+  $: ({ lesson, collection, vocabulary, documentTranslations, lessonMetrics, error } = data);
 </script>
 
 <svelte:head>
@@ -12,7 +12,7 @@
 {#if error}
   <div class="p-8 text-center text-red-500 text-xl">{error}</div>
 {:else if lesson}
-  <LessonView lesson={{ ...lesson, data: lesson.content }} />
+  <LessonView lesson={{ ...lesson, data: lesson.content }} {collection} {vocabulary} {documentTranslations} {lessonMetrics} lessonId={lesson.id} />
 {:else}
   <div class="p-8 text-center text-gray-500 text-xl">Loading lesson...</div>
 {/if}

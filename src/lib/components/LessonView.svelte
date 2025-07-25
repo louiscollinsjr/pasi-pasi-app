@@ -3,49 +3,135 @@
   import { Input } from '$lib/components/ui/input/index';
   import Button from '$lib/components/ui/button/button.svelte';
   import { findPronunciationMatches } from '$lib/data/pronunciationGuide.js';
+  import { VocabularyService } from '$lib/services/vocabularyService';
+  import type { VocabularyWord, WordTranslation } from '$lib/services/vocabularyService';
+  import { ArrowLeft, BarChart3, BookOpen, Eye, EyeOff } from 'lucide-svelte';
+  
   export let lesson: any;
+  export let collection: any = null;
+  export let vocabulary: Record<string, VocabularyWord> = {};
+  export let documentTranslations: Record<string, WordTranslation> = {};
+  export let lessonMetrics: any = null;
+  export let lessonId: string;
 
-  // State: { [wordId]: { known: boolean, translation: string } }
-  let wordState: Record<string, { known?: boolean; translation?: string }> = {};
   let editingWord: string | null = null;
   let translationInput = '';
   let showPronunciationGuide = false;
+  let localVocabulary = vocabulary; // Global known words only
+  let localDocumentTranslations = documentTranslations; // Document-specific translations
 
   import { tick } from 'svelte';
 
-  // Reset state when lesson changes (but preserve pronunciation guide setting)
-  $: if (lesson) {
-    wordState = {};
-    editingWord = null;
-    translationInput = '';
-    // Keep showPronunciationGuide setting across lessons
+  // Update local data when props change
+  $: localVocabulary = { ...vocabulary };
+  $: localDocumentTranslations = { ...documentTranslations };
+
+  // Helper function to normalize word for lookup
+  function normalizeWord(word: string): string {
+    return word.toLowerCase().replace(/[.,!?;:"'()]/g, '');
   }
 
-  async function handleWordClick(wordId: string) {
+  // Get vocabulary entry for a word (only returns if globally known)
+  function getWordVocabulary(word: string): VocabularyWord | null {
+    const normalized = normalizeWord(word);
+    return localVocabulary[normalized] || null;
+  }
+
+  // Get document-specific translation for a word
+  function getDocumentTranslation(word: string): string {
+    const normalized = normalizeWord(word);
+    return localDocumentTranslations[normalized]?.document_specific_translation || '';
+  }
+
+  // Update document translation as user types (for unknown words only)
+  async function updateDocumentTranslation(word: string, translation: string) {
+    const normalized = normalizeWord(word);
+    const vocab = getWordVocabulary(word);
+    
+    // Only store document translations for unknown words
+    if (!vocab?.known && translation.trim()) {
+      // Optimistic update
+      localDocumentTranslations[normalized] = {
+        id: '',
+        romanian_word: normalized,
+        document_specific_translation: translation.trim(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // Save to database
+      await VocabularyService.saveDocumentTranslation(lessonId, normalized, translation.trim());
+    } else if (!vocab?.known && !translation.trim()) {
+      // Remove if empty
+      delete localDocumentTranslations[normalized];
+      localDocumentTranslations = { ...localDocumentTranslations };
+    }
+  }
+
+  async function handleWordClick(wordId: string, word: string) {
     editingWord = null;
     await tick(); // Wait for DOM update
     editingWord = wordId;
-    translationInput = wordState[wordId]?.translation || '';
+    
+    // For known words, show the saved translation
+    // For unknown words, show any document translation they've entered
+    const vocab = getWordVocabulary(word);
+    if (vocab?.known) {
+      translationInput = vocab.eng_translation || '';
+    } else {
+      translationInput = getDocumentTranslation(word);
+    }
   }
 
-  function saveTranslation(wordId: string) {
-    wordState[wordId] = {
-      ...wordState[wordId],
-      translation: translationInput,
-      known: true
+  async function saveTranslation(word: string) {
+    const normalized = normalizeWord(word);
+    
+    if (!translationInput.trim()) {
+      alert('Please enter a translation before marking as known.');
+      return;
+    }
+    
+    // Optimistic update - mark as globally known
+    localVocabulary[normalized] = {
+      id: '',
+      romanian_word: normalized,
+      eng_translation: translationInput.trim(),
+      known: true,
+      first_learned_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
+    
+    // Remove from document translations since it's now globally known
+    delete localDocumentTranslations[normalized];
+    
+    // Save to database
+    const success = await VocabularyService.markWordAsKnown(lessonId, normalized, translationInput.trim());
+    
+    if (!success) {
+      // Revert optimistic update on failure
+      localVocabulary = { ...vocabulary };
+      localDocumentTranslations = { ...documentTranslations };
+      alert('Failed to save translation');
+    }
+    
     editingWord = null;
     translationInput = '';
-    // Optionally persist to localStorage here
   }
 
-  function markKnown(wordId: string) {
-    wordState[wordId] = {
-      ...wordState[wordId],
-      known: true
-    };
-    editingWord = null;
-    // Optionally persist to localStorage here
+  async function markKnown(word: string) {
+    const normalized = normalizeWord(word);
+    
+    // Check if there's a document translation to use
+    const documentTranslation = getDocumentTranslation(word);
+    
+    if (!documentTranslation.trim()) {
+      alert('Please add a translation first, then mark as known.');
+      return;
+    }
+    
+    // Use the document translation and mark as known
+    translationInput = documentTranslation;
+    await saveTranslation(word);
   }
 
   // Function to render word with pronunciation guide
@@ -64,24 +150,71 @@
   }
 </script>
 
-<div class="w-full max-w-[1440px] mx-auto p-4">
-  <div class="flex justify-between items-center mb-4">
-    <h2 class="font-normal text-gray-600 font-roboto text-lg">{lesson.title}</h2>
-    <div class="flex items-center gap-2">
-      <span class="text-xs {showPronunciationGuide ? 'text-green-600' : 'text-red-600'}">
-        Guide: {showPronunciationGuide ? 'ON' : 'OFF'}
-      </span>
-      <button 
-        class="px-3 py-1 text-xs border border-gray-300 rounded {showPronunciationGuide ? 'bg-green-100' : 'bg-white'} hover:bg-gray-50"
+<!-- Header Section -->
+<div class="border-b border-gray-100 bg-white">
+  <div class="container mx-auto px-6 py-8">
+    <div class="flex items-center gap-6 mb-6">
+      <a 
+        href={collection ? `/library/collections/${collection.id}` : '/library'} 
+        class="p-3 hover:bg-gray-50 rounded-xl transition-colors"
+        aria-label="Back to {collection ? 'collection' : 'library'}"
+      >
+        <ArrowLeft size={24} class="text-gray-400" />
+      </a>
+      <div class="flex-1">
+        <div class="flex items-center gap-3 mb-2">
+          {#if collection}
+            <a href="/library/collections/{collection.id}" class="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+              {collection.title}
+            </a>
+            <span class="text-gray-300">/</span>
+          {/if}
+          <div class="p-2 bg-gray-50 rounded-lg">
+            <BookOpen size={16} class="text-gray-400" />
+          </div>
+        </div>
+        <h1 class="text-3xl font-medium text-gray-900 break-words">{lesson.title}</h1>
+        
+        <!-- Lesson Metrics -->
+        {#if lessonMetrics}
+          <div class="flex items-center gap-6 mt-3 text-sm text-gray-400">
+            <div class="flex items-center gap-2">
+              <BarChart3 size={16} />
+              <span>{lessonMetrics.comprehensionRate}% comprehension</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span>{lessonMetrics.knownWords} / {lessonMetrics.totalWords} words known</span>
+            </div>
+          </div>
+        {/if}
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex justify-end">
+      <button
+        class="inline-flex items-center gap-3 px-6 py-3 {showPronunciationGuide ? 'bg-black text-white' : 'bg-gray-50 text-gray-600'} hover:bg-gray-800 hover:text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-lg"
         on:click={() => {
           showPronunciationGuide = !showPronunciationGuide;
           console.log('Pronunciation guide toggled:', showPronunciationGuide);
         }}
       >
-        {showPronunciationGuide ? 'Hide' : 'Show'} Pronunciation
+        {#if showPronunciationGuide}
+          <EyeOff size={18} />
+          <span class="hidden sm:inline">Hide Pronunciation</span>
+          <span class="sm:hidden">Hide</span>
+        {:else}
+          <Eye size={18} />
+          <span class="hidden sm:inline">Show Pronunciation</span>
+          <span class="sm:hidden">Show</span>
+        {/if}
       </button>
     </div>
   </div>
+</div>
+
+<!-- Main Content -->
+<div class="w-full max-w-[1440px] mx-auto px-6 py-8">
   <div class="text-xl leading-relaxed bg-white whitespace-pre-wrap font-roboto pt-24">
     {#each lesson.data.paragraphs as paragraph, pIdx}
       {#each paragraph.text.split(/\n/) as line, lIdx}
@@ -94,8 +227,8 @@
                   <button
                     type="button"
                     class="select-text cursor-pointer px-1 font-libreBaskerville font-patrickHandSc font-normal  bg-transparent border-none p-0 m-0 text-[#367dc2] text-gray-000 text-7xl relative"
-                    style="text-decoration-line: none; text-decoration-color: {wordState[`${paragraph.id}-${lIdx}-${wIdx}`]?.known ? 'gray' : 'green'}; text-decoration-style: dotted; text-decoration-opacity: {wordState[`${paragraph.id}-${lIdx}-${wIdx}`]?.known ? 0.2: .5};"
-                    on:click|stopPropagation={() => handleWordClick(`${paragraph.id}-${lIdx}-${wIdx}`)}
+                    style="text-decoration-line: none; text-decoration-color: {getWordVocabulary(word)?.known ? 'gray' : 'green'}; text-decoration-style: dotted; text-decoration-opacity: {getWordVocabulary(word)?.known ? 0.2: .5};"
+                    on:click|stopPropagation={() => handleWordClick(`${paragraph.id}-${lIdx}-${wIdx}`, word)}
                   >
                     {#if showPronunciationGuide}
                       {@const matches = word.pronunciationMatches ?? findPronunciationMatches(word)}
@@ -136,11 +269,12 @@
                 </PopoverTrigger>
                 <PopoverContent>
                   <div class="flex flex-col gap-2">
-                    <Button on:click={() => markKnown(`${paragraph.id}-${lIdx}-${wIdx}`)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
-                    <form on:submit|preventDefault={() => saveTranslation(`${paragraph.id}-${lIdx}-${wIdx}`)}>
+                    <Button on:click={() => markKnown(word)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
+                    <form on:submit|preventDefault={() => saveTranslation(word)}>
                       <Input
                         placeholder="Add translation"
                         bind:value={translationInput}
+                        on:input={() => updateDocumentTranslation(word, translationInput)}
                         class="mb-2 text-xl"
                         autofocus
                       />
@@ -149,8 +283,10 @@
                   </div>
                 </PopoverContent>
               </Popover>
-              {#if wordState[`${paragraph.id}-${lIdx}-${wIdx}`]?.translation}
-                <span class="block text-[12px] text-gray-400 my-1 font-libreBaskerville font-bold tracking-wide">{wordState[`${paragraph.id}-${lIdx}-${wIdx}`].translation}</span>
+              {#if getWordVocabulary(word)?.eng_translation}
+                <span class="block text-[12px] text-gray-400 my-1 font-libreBaskerville font-bold tracking-wide">{getWordVocabulary(word)?.eng_translation}</span>
+              {:else if getDocumentTranslation(word)}
+                <span class="block text-[12px] text-blue-400 my-1 font-libreBaskerville font-bold tracking-wide italic">{getDocumentTranslation(word)}</span>
               {/if}
             </span>
             {' '}

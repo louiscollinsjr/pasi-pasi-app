@@ -5,11 +5,15 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
+  import { browser } from '$app/environment';
   import Navbar from '$lib/components/Navbar.svelte';
   import AppSidebar from '$lib/components/AppSidebar.svelte';
   import LessonView from '$lib/components/LessonView.svelte';
   import { sidebarOpen } from '$lib/stores/sidebarStore';
+  import { user as userStore } from '$lib/stores/userStore';
+  import { supabase } from '$lib/supabaseClient';
   import { FilePlus, Files, Gear, Export, PencilSimple, Archive, Trash } from 'phosphor-svelte';
+  import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
   let lessons = [];
 let openMenuIdx = null;
 let selectedLesson = null;
@@ -46,6 +50,31 @@ function handleOutsideClick(event) {
 function handleEsc(event) {
   if (event.key === 'Escape') {
     openMenuIdx = null;
+  }
+}
+
+// Initialize authentication state on app load
+if (browser) {
+  // Get initial session
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    console.log('Initial session in layout:', session);
+    const currentUser = session?.user ?? null;
+    userStore.set(currentUser);
+  });
+
+  // Listen for auth state changes globally
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+    console.log(`🔄 Global auth state changed: ${event}`);
+    const currentUser = session?.user ?? null;
+    console.log('Updating userStore with user:', currentUser?.email ?? 'null');
+    userStore.set(currentUser);
+  });
+
+  // Clean up subscription when component is destroyed
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', () => {
+      subscription.unsubscribe();
+    });
   }
 }
 

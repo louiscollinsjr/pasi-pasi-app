@@ -1,59 +1,15 @@
 <script lang="ts">
 import { supabase } from '$lib/supabaseClient';
 import { Button } from '$lib/components/ui/button/index';
-import { onMount, onDestroy } from 'svelte';
-import { browser } from '$app/environment';
 import { user as userStore } from '$lib/stores/userStore';
-import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 
 let email = '';
-let user = null;
 let loading = false;
 let message = '';
 let messageType: 'success' | 'error' = 'success';
 
-// Get initial session
-if (browser) {
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    console.log('Initial session:', session);
-    console.log('Initial user:', session?.user?.email || 'null');
-    user = session?.user ?? null;
-    userStore.set(user);
-  });
-}
-
-// Listen for auth state changes
-if (browser) {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
-    console.log(`🔄 Auth state changed: ${event}`);
-    console.log('Session:', session);
-    const currentUser = session?.user ?? null;
-    console.log('User email:', currentUser?.email ?? 'null');
-    
-    // Log the update
-    console.log(`User state updated from: ${user?.email ?? 'null'} to: ${currentUser?.email ?? 'null'}`);
-    user = currentUser;
-    userStore.set(user);
-    
-    if (event === 'SIGNED_IN') {
-      console.log('✅ User signed in successfully!');
-      loading = false;
-      message = 'Successfully signed in!';
-      messageType = 'success';
-    } else if (event === 'SIGNED_OUT') {
-      console.log('👋 User signed out');
-      message = '';
-    }
-  });
-
-  onMount(() => {
-    console.log('🚀 AuthForm mounted, setting up auth listener');
-    return () => {
-      console.log('🧹 AuthForm unmounted, cleaning up auth listener');
-      subscription.unsubscribe();
-    };
-  });
-}
+// Subscribe to the global user store
+$: user = $userStore;
 
 async function login() {
   loading = true;
@@ -82,7 +38,6 @@ async function login() {
 async function logout() {
   console.log('Logging out user:', user?.email);
   await supabase.auth.signOut();
-  user = null;
   message = '';
   console.log('User logged out');
 }

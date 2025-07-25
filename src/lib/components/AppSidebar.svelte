@@ -156,10 +156,10 @@
     </nav>
 
     <!-- User info at bottom -->
-    <div class="p-4 border-t border-gray-200">
+    <!-- <div class="p-4 border-t border-gray-200">
       <div class="text-sm text-gray-600">
         Louis Collins
       </div>
-    </div>
+    </div> -->
   </div>
 </aside>

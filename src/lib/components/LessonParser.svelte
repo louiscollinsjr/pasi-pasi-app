@@ -1,8 +1,13 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  import { supabase } from '$lib/supabaseClient';
   import { parseLesson, type ParsedLesson, reconstructLesson } from '$lib/utils/parseLesson';
   import Button from '$lib/components/ui/button/button.svelte';
   import * as Card from '$lib/components/ui/card/index';
   import { Textarea } from '$lib/components/ui/textarea/index';
+
+  export let collectionId: number | null = null;
+  const dispatch = createEventDispatcher();
 
   let inputText = '';
   let parsedLesson: ParsedLesson | null = null;
@@ -63,29 +68,47 @@ Cultura română este bogată și diversă. Românii sunt cunoscuți pentru ospi
   }
 
   let saveStatus = '';
+  let isSaving = false;
 
-  function saveLesson() {
+  async function saveDocument() {
     if (!parsedLesson) return;
-    
-    // Get existing lessons or create empty array
-    const existingLessons = JSON.parse(localStorage.getItem('pasi_lessons') || '[]');
-    
-    const newLesson = {
-      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      saveStatus = 'You must be logged in to save.';
+      setTimeout(() => (saveStatus = ''), 3000);
+      return;
+    }
+
+    isSaving = true;
+    saveStatus = 'Saving...';
+
+    const documentData = {
+      collection_id: collectionId,
+      user_id: user.id,
       title: parsedLesson.title,
-      date: new Date().toISOString(),
-      data: parsedLesson
+      content: parsedLesson, // The full parsed object for the JSONB column
+      original_text: inputText
     };
-    
-    // Add new lesson to existing lessons
-    existingLessons.push(newLesson);
-    localStorage.setItem('pasi_lessons', JSON.stringify(existingLessons));
-    
-    // Trigger sidebar refresh by dispatching custom event
-    window.dispatchEvent(new CustomEvent('lessonsUpdated'));
-    
-    // Show success message
-    saveStatus = 'Lesson saved successfully!';
+
+    const { data, error } = await supabase
+      .from('documents')
+      .insert(documentData)
+      .select()
+      .single();
+
+    if (error) {
+      saveStatus = `Error: ${error.message}`;
+      console.error('Error saving document:', error);
+    } else {
+      saveStatus = 'Document saved successfully!';
+      dispatch('documentAdded', data);
+      
+      // Optionally clear the parser
+      clearAll();
+    }
+
+    isSaving = false;
     setTimeout(() => saveStatus = '', 3000);
   }
 </script>
@@ -179,8 +202,8 @@ Cultura română este bogată și diversă. Românii sunt cunoscuți pentru ospi
       {#if saveStatus}
         <span class="text-sm text-green-600 font-medium">{saveStatus}</span>
       {/if}
-      <Button onclick={saveLesson} variant="default" class="mb-4">
-        Save Lesson
+      <Button onclick={saveDocument} variant="default" class="mb-4" disabled={isSaving}>
+        {isSaving ? 'Saving...' : (collectionId ? 'Save Document to Collection' : 'Save Document')}
       </Button>
     </div>
     <Card.Root>

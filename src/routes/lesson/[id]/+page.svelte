@@ -1,22 +1,18 @@
-<script>
-  import { page } from '$app/stores';
-  import { browser } from '$app/environment';
+<script lang="ts">
   import LessonView from '$lib/components/LessonView.svelte';
+  export let data;
 
-  let lesson = null;
-
-  // Reactively load lesson when page params change (only in browser)
-  $: if ($page.params.id && browser) {
-    const lessons = JSON.parse(localStorage.getItem('pasi_lessons') || '[]');
-    console.log('Loading lesson with ID:', $page.params.id);
-    console.log('Available lessons:', lessons);
-    lesson = lessons.find(l => l.id === $page.params.id);
-    console.log('Found lesson:', lesson);
-  }
+  $: ({ lesson, error } = data);
 </script>
 
-{#if lesson}
-  <LessonView {lesson} />
+<svelte:head>
+  <title>{lesson ? lesson.title : 'Lesson'}</title>
+</svelte:head>
+
+{#if error}
+  <div class="p-8 text-center text-red-500 text-xl">{error}</div>
+{:else if lesson}
+  <LessonView lesson={{ ...lesson, data: lesson.content }} />
 {:else}
-  <div class="p-8 text-center text-gray-500 text-xl">Lesson not found.</div>
+  <div class="p-8 text-center text-gray-500 text-xl">Loading lesson...</div>
 {/if}

@@ -8,9 +8,8 @@
   import Navbar from '$lib/components/Navbar.svelte';
   import AppSidebar from '$lib/components/AppSidebar.svelte';
   import LessonView from '$lib/components/LessonView.svelte';
+  import { sidebarOpen } from '$lib/stores/sidebarStore';
   import { FilePlus, Files, Gear, Export, PencilSimple, Archive, Trash } from 'phosphor-svelte';
-
-  let sidebarOpen = false;
   let lessons = [];
 let openMenuIdx = null;
 let selectedLesson = null;
@@ -71,7 +70,7 @@ onMount(() => {
   ];
 
   function toggleSidebar() {
-    sidebarOpen = !sidebarOpen;
+    sidebarOpen.update(n => !n);
   }
 </script>
 
@@ -83,12 +82,12 @@ onMount(() => {
 
 <div class="min-h-screen bg-white">
   <!-- Static Navbar -->
-  <Navbar {toggleSidebar} {sidebarOpen} />
+  <Navbar {toggleSidebar} sidebarOpen={$sidebarOpen} />
   
   <!-- Sidebar -->
   <AppSidebar
-    {sidebarOpen}
-    setSidebarOpen={v => sidebarOpen = v}
+    sidebarOpen={$sidebarOpen}
+    setSidebarOpen={v => sidebarOpen.set(v)}
     {menu}
     {lessons}
     {selectedLesson}
@@ -105,7 +104,7 @@ onMount(() => {
   />
 
   <!-- Main content area -->
-  <main class="pt-16 transition-all duration-300 ease-in-out {sidebarOpen ? 'ml-64' : 'ml-0'}">
+  <main class="pt-16 transition-all duration-300 ease-in-out {$sidebarOpen ? 'ml-64' : 'ml-0'}">
     <div class="max-w-6xl mx-auto px-4 py-8">
       {#if selectedLesson}
         <LessonView lesson={selectedLesson} />

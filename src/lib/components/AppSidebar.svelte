@@ -1,4 +1,5 @@
-<script>
+<script lang="ts">
+  import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { X } from 'phosphor-svelte';
 
@@ -22,9 +23,15 @@
 
   let deleteConfirmIdx = null;
 
-  function handleMenuClick(label) {
+  function handleMenuClick(event, label) {
+    event.preventDefault();
     if (label === 'New lesson') goto('/parser');
     else if (label === 'Library') goto('/library');
+
+    // Close sidebar on mobile after navigation
+    if (window.innerWidth < 768) {
+      closeSidebar();
+    }
   }
 
   function closeSidebar() {
@@ -57,13 +64,15 @@
       <!-- Main menu items -->
       <div class="space-y-2">
         {#each menu as item}
-          <button 
+          <a 
+            href="#" 
             class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors text-left"
-            on:click={() => handleMenuClick(item.label)}
+            on:click={(e) => handleMenuClick(e, item.label)}
+            class:bg-gray-100={($page.url.pathname.startsWith('/parser') && item.label === 'New lesson') || ($page.url.pathname.startsWith('/library') && item.label === 'Library')}
           >
             <svelte:component this={item.icon} size={18} class="text-gray-500" />
             {item.label}
-          </button>
+          </a>
         {/each}
       </div>
 

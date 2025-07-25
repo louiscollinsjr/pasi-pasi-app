@@ -6,7 +6,8 @@
   import { VocabularyService } from '$lib/services/vocabularyService';
   import type { VocabularyWord, WordTranslation } from '$lib/services/vocabularyService';
   import { ArrowLeft, BarChart3, BookOpen, Eye, EyeOff } from 'lucide-svelte';
-  
+  import { writable, get } from 'svelte/store';
+
   export let lesson: any;
   export let collection: any = null;
   export let vocabulary: Record<string, VocabularyWord> = {};
@@ -18,13 +19,12 @@
   let translationInput = '';
   let showPronunciationGuide = false;
   let localVocabulary = vocabulary; // Global known words only
-  let localDocumentTranslations = documentTranslations; // Document-specific translations
+  const documentTranslationsStore = writable(documentTranslations);
 
   import { tick } from 'svelte';
 
   // Update local data when props change
   $: localVocabulary = { ...vocabulary };
-  $: localDocumentTranslations = { ...documentTranslations };
 
   // Helper function to normalize word for lookup
   function normalizeWord(word: string): string {
@@ -40,32 +40,61 @@
   // Get document-specific translation for a word
   function getDocumentTranslation(word: string): string {
     const normalized = normalizeWord(word);
-    return localDocumentTranslations[normalized]?.document_specific_translation || '';
+    const translations = get(documentTranslationsStore);
+    return translations[normalized]?.translation || '';
   }
 
-  // Update document translation as user types (for unknown words only)
+  // Reactive helper for template
+  $: getTranslationForWord = (word: string) => {
+    const normalized = normalizeWord(word);
+    return $documentTranslationsStore[normalized]?.translation || '';
+  };
+
+  // Reactive helper to check if word has translation
+  $: hasTranslationForWord = (word: string) => {
+    const normalized = normalizeWord(word);
+    return !!$documentTranslationsStore[normalized];
+  };
+
+  // Update document translation as user types
   async function updateDocumentTranslation(word: string, translation: string) {
     const normalized = normalizeWord(word);
-    const vocab = getWordVocabulary(word);
     
-    // Only store document translations for unknown words
-    if (!vocab?.known && translation.trim()) {
-      // Optimistic update
-      localDocumentTranslations[normalized] = {
+    if (translation.trim()) {
+      const newTranslation = {
         id: '',
-        romanian_word: normalized,
-        document_specific_translation: translation.trim(),
+        original_word: word,
+        normalized_word: normalized,
+        translation: translation.trim(),
+        language_code: 'ro',
+        status: 'confirmed',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
       
-      // Save to database
-      await VocabularyService.saveDocumentTranslation(lessonId, normalized, translation.trim());
-    } else if (!vocab?.known && !translation.trim()) {
-      // Remove if empty
-      delete localDocumentTranslations[normalized];
-      localDocumentTranslations = { ...localDocumentTranslations };
+      documentTranslationsStore.update(translations => ({
+        ...translations,
+        [normalized]: newTranslation
+      }));
+      
+      await VocabularyService.saveDocumentTranslation(
+        lessonId, 
+        word, 
+        normalized,
+        translation.trim(),
+        'ro'
+      );
+    } else {
+      documentTranslationsStore.update(translations => {
+        const { [normalized]: _, ...rest } = translations;
+        return rest;
+      });
     }
+  }
+
+  function hasDocumentTranslation(word: string): boolean {
+    const normalized = normalizeWord(word);
+    return !!get(documentTranslationsStore)[normalized];
   }
 
   async function handleWordClick(wordId: string, word: string) {
@@ -81,6 +110,21 @@
     } else {
       translationInput = getDocumentTranslation(word);
     }
+  }
+
+  // Save document translation only (doesn't mark as known)
+  async function saveDocumentTranslationOnly(word: string) {
+    if (!translationInput.trim()) return;
+    
+    await updateDocumentTranslation(word, translationInput.trim());
+    translationInput = '';
+    editingWord = null;
+  }
+
+  async function deleteTranslation(word: string) {
+    await updateDocumentTranslation(word, '');
+    translationInput = '';
+    editingWord = null;
   }
 
   async function saveTranslation(word: string) {
@@ -101,8 +145,14 @@
       updated_at: new Date().toISOString()
     };
     
+    // Trigger reactivity for vocabulary update
+    localVocabulary = { ...localVocabulary };
+    
     // Remove from document translations since it's now globally known
-    delete localDocumentTranslations[normalized];
+    documentTranslationsStore.update(translations => {
+      const { [normalized]: _, ...rest } = translations;
+      return rest;
+    });
     
     // Save to database
     const success = await VocabularyService.markWordAsKnown(lessonId, normalized, translationInput.trim());
@@ -110,7 +160,6 @@
     if (!success) {
       // Revert optimistic update on failure
       localVocabulary = { ...vocabulary };
-      localDocumentTranslations = { ...documentTranslations };
       alert('Failed to save translation');
     }
     
@@ -269,7 +318,7 @@
                 <PopoverContent>
                   <div class="flex flex-col gap-2">
                     <Button on:click={() => markKnown(word)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
-                    <form on:submit|preventDefault={() => saveTranslation(word)}>
+                    <form on:submit|preventDefault={() => saveDocumentTranslationOnly(word)}>
                       <Input
                         placeholder="Add translation"
                         bind:value={translationInput}
@@ -277,15 +326,20 @@
                         class="mb-2 text-xl"
                         autofocus
                       />
-                      <Button type="submit" variant="default" class="w-full text-xl font-bold">Update</Button>
+                      <div class="flex gap-2">
+                        <Button type="submit" variant="default" class="flex-1 text-xl font-bold">Update</Button>
+                        {#if hasTranslationForWord(word)}
+                          <Button on:click={() => deleteTranslation(word)} variant="destructive" class="text-xl font-bold">Delete</Button>
+                        {/if}
+                      </div>
                     </form>
                   </div>
                 </PopoverContent>
               </Popover>
               {#if getWordVocabulary(word)?.eng_translation}
                 <span class="block text-[12px] text-gray-400 my-1 font-libreBaskerville font-bold tracking-wide">{getWordVocabulary(word)?.eng_translation}</span>
-              {:else if getDocumentTranslation(word)}
-                <span class="block text-[12px] text-blue-400 my-1 font-libreBaskerville font-bold tracking-wide italic">{getDocumentTranslation(word)}</span>
+              {:else if hasTranslationForWord(word)}
+                <span class="block text-[12px] text-blue-400 my-1 font-libreBaskerville font-bold tracking-wide italic">{getTranslationForWord(word)}</span>
               {/if}
             </span>
             {' '}

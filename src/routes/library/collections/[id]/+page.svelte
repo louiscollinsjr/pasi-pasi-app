@@ -37,7 +37,7 @@
 			.from('documents')
 			.select('*')
 			.eq('collection_id', collectionId)
-			.order('created_at', { ascending: false });
+			.order('created_at', { ascending: true });
 
 		if (fetchError) {
 			error = fetchError.message;

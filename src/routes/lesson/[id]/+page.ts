@@ -24,15 +24,23 @@ export const load: PageLoad = async ({ params }) => {
 
   // Extract words from lesson content and fetch both global vocabulary and document translations
   const wordsInLesson = VocabularyService.extractWordsFromLesson(data.content);
+
+  // Helper function to normalize words
+  function normalizeWord(word: string): string {
+    return word.toLowerCase().replace(/[.,!?;:"'()]/g, '');
+  }
+
+  const normalizedWordsInLesson = wordsInLesson.map(normalizeWord);
+
   const [vocabulary, documentTranslations] = await Promise.all([
     VocabularyService.getVocabularyForWords(wordsInLesson),
-    VocabularyService.getDocumentTranslations(data.id, wordsInLesson)
+    VocabularyService.getDocumentTranslations(data.id, normalizedWordsInLesson)
   ]);
 
   // Calculate lesson metrics
   const totalWords = wordsInLesson.length;
   const knownWords = wordsInLesson.filter(word => {
-    const normalized = word.toLowerCase().replace(/[.,!?;:"'()]/g, '');
+    const normalized = normalizeWord(word);
     return vocabulary[normalized]?.known;
   }).length;
   const comprehensionRate = totalWords > 0 ? Math.round((knownWords / totalWords) * 100) : 0;

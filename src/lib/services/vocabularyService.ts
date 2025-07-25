@@ -1,4 +1,5 @@
 import { supabase } from '$lib/supabaseClient';
+import type { VocabularyWord, WordTranslation } from '$lib/types';
 
 export interface VocabularyWord {
   id: string;
@@ -11,8 +12,11 @@ export interface VocabularyWord {
 
 export interface WordTranslation {
   id: string;
-  romanian_word: string;
+  original_word: string;
+  normalized_word: string;
   document_specific_translation: string;
+  language_code: string;
+  status: string;
   created_at: string;
   updated_at: string;
 }
@@ -65,22 +69,26 @@ export class VocabularyService {
    */
   static async getDocumentTranslations(documentId: string, words: string[]): Promise<Record<string, WordTranslation>> {
     if (words.length === 0) return {};
-
+    
+    // Normalize words for lookup
+    const normalizedWords = words.map(word => 
+      word.toLowerCase().replace(/[.,!?;:"'()]/g, ''));
+    
     const { data, error } = await supabase
       .from('word_translations')
       .select('*')
       .eq('document_id', documentId)
-      .in('romanian_word', words);
+      .in('normalized_word', normalizedWords);
 
     if (error) {
       console.error('Error fetching document translations:', error);
       return {};
     }
 
-    // Convert to lookup object
+    // Create lookup by normalized word
     const translations: Record<string, WordTranslation> = {};
-    data?.forEach(translation => {
-      translations[translation.romanian_word] = translation;
+    data.forEach(translation => {
+      translations[translation.normalized_word] = translation;
     });
 
     return translations;
@@ -126,7 +134,13 @@ export class VocabularyService {
   /**
    * Save or update a document-specific translation
    */
-  static async saveDocumentTranslation(documentId: string, romanianWord: string, translation: string): Promise<boolean> {
+  static async saveDocumentTranslation(
+    documentId: string,
+    originalWord: string,
+    normalizedWord: string,
+    translation: string,
+    languageCode: string = 'ro'
+  ): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !translation?.trim()) return false;
 
@@ -135,10 +149,13 @@ export class VocabularyService {
       .upsert({
         user_id: user.id,
         document_id: documentId,
-        romanian_word: romanianWord,
-        document_specific_translation: translation.trim()
+        original_word: originalWord,
+        normalized_word: normalizedWord,
+        translation: translation.trim(),
+        language_code: languageCode,
+        status: 'confirmed'
       }, {
-        onConflict: 'user_id,document_id,romanian_word'
+        onConflict: 'user_id,document_id,normalized_word,language_code'
       });
 
     if (error) {

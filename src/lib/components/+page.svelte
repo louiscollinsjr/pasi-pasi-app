@@ -190,7 +190,7 @@
 					on:click={openCreateModal}
 					class="hidden sm:inline-flex items-center gap-3 px-6 py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-lg"
 				>
-					<Add size={18} />
+					<!-- <Add size={18} /> -->
 					<span class="hidden sm:inline">Create Collection</span>
 				</button>
 			</div>

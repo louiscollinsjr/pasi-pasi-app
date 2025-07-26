@@ -175,9 +175,9 @@
 	<title>Library</title>
 </svelte:head>
 
-<div class="min-h-[100dvh] sm:min-h-screen">
+<div class="container min-h-[100dvh] sm:min-h-screen">
 	<!-- Header Section -->
-	<div class="border-b border-gray-100">
+	<div class="container border-b border-gray-100">
 		<div class="container mx-auto px-6 py-12">
 			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
 				<div>

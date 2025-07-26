@@ -7,32 +7,42 @@
 </svelte:head>
 
 <main class="min-h-screen flex flex-col items-center justify-center p-8 max-w-7xl mx-auto ">
-  <div class="text-center flex-1 flex flex-col justify-center gap-6">
-    <h1 class="text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
-     <span class="text-black font-mansalva">Leo&Finn</span>
+  <div class="text-center flex-1 flex flex-col justify-center items-center gap-6 px-4">
+    <!-- Brand Title -->
+    <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
+      <span class="text-black font-mansalva">Leo&Finn</span>
     </h1>
-    
-    <div class="font-mono text-sm text-slate-500 my-2">
+  
+    <!-- Subheading / Tagline -->
+    <div class="font-mono text-sm text-slate-400 tracking-wide uppercase">
       [ enter flow state ]
     </div>
-    
-    <p class="text-xl text-slate-600 font-normal leading-relaxed">
+  
+    <!-- Hero Tagline -->
+    <p class="text-lg md:text-xl text-slate-600 font-normal leading-relaxed">
       Your language learning companion.
     </p>
-    
-    <div class="max-w-lg mx-auto">
-      <p class="text-base leading-7 text-slate-600">
-        Leo&Finn is designed to help you master any language through interactive lessons, pronunciation guides, and practical vocabulary. Whether you&apos;re a beginner or brushing up, every step brings you closer to fluency.
+  
+    <!-- Hero Body -->
+    <div class="max-w-xl mx-auto">
+      <p class="text-base text-slate-600 leading-7">
+        Leo&Finn helps you internalize any language using the decode method—by understanding, not memorizing. Break down real sentences, hear natural pronunciation, and make lasting connections as you go.
       </p>
     </div>
-    
-    <div class="mt-8">
-      <a href="/lesson/1" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 bg-slate-900 text-slate-50 hover:bg-slate-900/90 px-4 py-2.5 no-underline">
+  
+    <!-- CTA Button -->
+    <div class="mt-6">
+      <a
+        href="/library"
+        class="inline-flex items-center justify-center rounded-md bg-slate-900 text-slate-50 hover:bg-slate-800 px-5 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2"
+      >
         Start Learning
       </a>
     </div>
   </div>
-  
+  <!-- Section: Component to display upto six random public lessons similare styling to collection library -->
+
+  <!-- Section to suggest features -->
   <section class="text-center py-12 border-t border-slate-200 mt-8 w-full">
     <h2 class="text-2xl font-semibold text-slate-900 mb-4 leading-tight">
       Stay Tuned!

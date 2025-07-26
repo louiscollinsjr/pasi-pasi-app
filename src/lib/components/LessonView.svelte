@@ -202,7 +202,7 @@
 </script>
 
 <!-- Header Section -->
-<div class="border-b border-gray-100 bg-white">
+<div class="container border-b border-gray-100 bg-white mx-auto">
   <div class="container mx-auto px-6 py-8">
     <div class="mb-6">
       <!-- Breadcrumb Navigation -->
@@ -264,7 +264,7 @@
 </div>
 
 <!-- Main Content -->
-<div class="w-full mx-auto px-6 py-8">
+<div class="container mx-auto px-6 py-8">
   <div class="text-xl leading-relaxed bg-white whitespace-pre-wrap font-roboto pt-24">
     {#each lesson.data.paragraphs as paragraph, pIdx}
       {#if sentencePerLine}

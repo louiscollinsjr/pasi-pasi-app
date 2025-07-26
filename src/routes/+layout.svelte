@@ -14,7 +14,9 @@
   import { supabase } from '$lib/supabaseClient';
   import { FilePlus, Files, Gear, Export, PencilSimple, Archive, Trash } from 'phosphor-svelte';
   import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
-  let lessons = [];
+
+
+let lessons: any[] = [];
 let openMenuIdx = null;
 let selectedLesson = null;
 
@@ -93,9 +95,9 @@ onMount(() => {
 });
 
   let menu = [
-    { label: 'New lesson', icon: FilePlus, action: () => {goto('/parser')} },
+    // { label: 'New lesson', icon: FilePlus, action: () => {goto('/parser')} },
     { label: 'Library', icon: Files, action: () => {} },
-    { label: 'Settings', icon: Gear, action: () => {} },
+    // { label: 'Settings', icon: Gear, action: () => {} },
   ];
 
   function toggleSidebar() {
@@ -134,7 +136,7 @@ onMount(() => {
 
   <!-- Main content area -->
   <main class="pt-16 transition-all duration-300 ease-in-out {$sidebarOpen ? 'md:ml-64 transform md:transform-none' : 'ml-0'} {$sidebarOpen ? 'md:translate-x-0 translate-x-64' : 'translate-x-0'}">
-    <div class="max-w-6xl mx-auto px-4 py-8 {$sidebarOpen ? 'md:min-w-0 min-w-full' : 'min-w-0'}">
+    <div class="max-w-[1536px] bg-red- mx-auto px-4 py-8 {$sidebarOpen ? 'md:min-w-0 min-w-full' : 'min-w-0'}">
       {#if selectedLesson}
         <LessonView lesson={selectedLesson} />
       {:else}

@@ -41,6 +41,7 @@
 	},
 	"dependencies": {
 		"@fontsource-variable/jetbrains-mono": "^5.2.6",
+		"@fontsource-variable/lexend": "^5.2.9",
 		"@fontsource-variable/lora": "^5.2.6",
 		"@fontsource-variable/roboto": "^5.2.6",
 		"@fontsource/libre-baskerville": "^5.2.6",

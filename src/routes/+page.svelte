@@ -3,13 +3,13 @@
 </script>
 
 <svelte:head>
-  <title>Pași Pași - Romanian Language Learning</title>
+  <title>Leo&Finn - Romanian Language Learning</title>
 </svelte:head>
 
-<main class="min-h-screen flex flex-col items-center justify-center p-8 max-w-4xl mx-auto">
+<main class="min-h-screen flex flex-col items-center justify-center p-8 max-w-7xl mx-auto ">
   <div class="text-center flex-1 flex flex-col justify-center gap-6">
-    <h1 class="text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-      Welcome to Pași Pași
+    <h1 class="text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
+     <span class="text-black font-mansalva">Leo&Finn</span>
     </h1>
     
     <div class="font-mono text-sm text-slate-500 my-2">
@@ -17,12 +17,12 @@
     </div>
     
     <p class="text-xl text-slate-600 font-normal leading-relaxed">
-      Your companion for learning Romanian, step by step.
+      Your language learning companion.
     </p>
     
     <div class="max-w-lg mx-auto">
       <p class="text-base leading-7 text-slate-600">
-        Pași Pași is designed to help you master Romanian through interactive lessons, pronunciation guides, and practical vocabulary. Whether you&apos;re a beginner or brushing up, every step brings you closer to fluency.
+        Leo&Finn is designed to help you master any language through interactive lessons, pronunciation guides, and practical vocabulary. Whether you&apos;re a beginner or brushing up, every step brings you closer to fluency.
       </p>
     </div>
     
@@ -53,3 +53,10 @@
 </main>
 
 
+<style>
+  
+  .font-mansalva {
+    font-family: 'Mansalva', serif !important;
+  }
+  
+</style>

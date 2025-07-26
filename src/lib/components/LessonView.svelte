@@ -15,9 +15,11 @@
   export let lessonMetrics: any = null;
   export let lessonId: string;
 
-  let editingWord: string | null = null;
+  let selectedWordId = null;
+  let editingWord = null;
   let translationInput = '';
   let showPronunciationGuide = false;
+  let sentencePerLine = true; // Toggle between sentence-per-line vs paragraph mode
   let localVocabulary = vocabulary; // Global known words only
   const documentTranslationsStore = writable(documentTranslations);
 
@@ -262,19 +264,113 @@
 </div>
 
 <!-- Main Content -->
-<div class="w-full max-w-[1440px] mx-auto px-6 py-8">
+<div class="w-full mx-auto px-6 py-8">
   <div class="text-xl leading-relaxed bg-white whitespace-pre-wrap font-roboto pt-24">
     {#each lesson.data.paragraphs as paragraph, pIdx}
-      {#each paragraph.text.split(/\n/) as line, lIdx}
-        {#if lIdx > 0}<br>{/if}
-        {#each line.trim().split(/\s+/) as word, wIdx}
+      {#if sentencePerLine}
+        {@const sentences = paragraph.text.split(/([.!?]+)/).filter(s => s.trim())}
+        {#each sentences as sentence, sIdx}
+          {#if sentence.match(/[.!?]/)}
+            <!-- This is punctuation, render it with the previous sentence -->
+          {:else if sentence.trim()}
+            {#if sIdx > 0}<br><br>{/if}
+            {#each sentence.trim().split(/\s+/) as word, wIdx}
+              {#key `${paragraph.id}-s${sIdx}-${wIdx}`}
+                <span class="inline-flex flex-col items-center align-top">
+                  <!-- Word rendering logic here -->
+                  <Popover open={editingWord === `${paragraph.id}-s${sIdx}-${wIdx}`}>
+                    <PopoverTrigger>
+                      <button
+                        type="button"
+                        class="select-text cursor-pointer px-1 font-libreBaskerville font-normal bg-transparent border-none p-0 m-0 text-[#367dc2] text-gray-600 text-5xl relative"
+                        style="text-decoration-line: none; text-decoration-color: {getWordVocabulary(word)?.known ? 'gray' : 'green'}; text-decoration-style: dotted; text-decoration-opacity: {getWordVocabulary(word)?.known ? 0.2: .5};"
+                        on:click|stopPropagation={() => handleWordClick(`${paragraph.id}-s${sIdx}-${wIdx}`, word)}
+                      >
+                        {#if showPronunciationGuide}
+                          {@const matches = word.pronunciationMatches ?? findPronunciationMatches(word)}
+                          {#if matches.length > 0}
+                            <!-- Render word with aligned pronunciation annotations -->
+                            <div class="inline-flex flex-col items-start">
+                              <!-- Word with highlighted letters -->
+                              <div class="flex">
+                                {#each word.split('') as char, charIdx}
+                                  {@const currentMatch = matches.find(m => m.startIndex === charIdx)}
+                                  {#if currentMatch}
+                                    <span class="inline-flex flex-col items-center" style="flex: 0 0 auto; width: {currentMatch.endIndex - currentMatch.startIndex + 1}ch;">
+                                      <span class="flex">
+                                        {#each Array(currentMatch.endIndex - currentMatch.startIndex + 1) as _, i}
+                                          <span style="color: #9D4EDD;">{word[charIdx + i]}</span> <!--#9D4EDD is purple-->
+                                        {/each}
+                                      </span>
+                                      <span class="text-2xl text-[#367dc2] font-patrickHandSc bg-blue-000 px-1 py-0.5 rounded mt-1 whitespace-nowrap text-center" style="display:inline-block;min-width:100%;">
+                                        {currentMatch.pronunciation}
+                                      </span>
+                                    </span>
+                                  {:else if !matches.some(m => charIdx > m.startIndex && charIdx <= m.endIndex)}
+                                    <span>{char}</span>
+                                  {/if}
+                                {/each}
+                              </div>
+                            </div>
+                          {:else}
+                            {word}
+                          {/if}
+                        {:else}
+                          {word}
+                        {/if}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <div class="flex flex-col gap-2">
+                        <Button on:click={() => markKnown(word)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
+                        <form on:submit|preventDefault={() => saveDocumentTranslationOnly(word)}>
+                          <Input
+                            placeholder="Add translation"
+                            bind:value={translationInput}
+                            on:input={() => updateDocumentTranslation(word, translationInput)}
+                            class="mb-2 text-xl"
+                            autofocus
+                          />
+                          <div class="flex gap-2">
+                            <Button type="submit" variant="default" class="flex-1 text-xl font-bold">Update</Button>
+                            {#if hasTranslationForWord(word)}
+                              <Button on:click={() => deleteTranslation(word)} variant="destructive" class="text-xl font-bold">Delete</Button>
+                            {/if}
+                          </div>
+                        </form>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {#if getWordVocabulary(word)?.eng_translation}
+                    <span class="block text-[12px] text-gray-200 my-1 font-libreBaskerville font-bold tracking-wide">{getWordVocabulary(word)?.eng_translation}</span>
+                  {:else if hasTranslationForWord(word)}
+                    <span class="block text-xl text-gray-900 my-2 mt-4 font-roboto font-bold tracking-wide">{getTranslationForWord(word)}</span>
+                  {/if}
+                </span>
+                {' '}
+              {/key}
+            {/each}
+            <!-- Add punctuation if next item is punctuation -->
+            {#if sentences[sIdx + 1] && sentences[sIdx + 1].match(/[.!?]/)}
+              <span class="inline-flex flex-col items-center align-top">
+                <button type="button" class="select-text cursor-pointer px-1 font-libreBaskerville font-normal bg-transparent border-none p-0 m-0 text-[#367dc2] text-gray-600 text-5xl relative">
+                  {sentences[sIdx + 1]}
+                </button>
+              </span>
+            {/if}
+          {/if}
+        {/each}
+      {:else}
+        {#each paragraph.text.split(/\n/) as line, lIdx}
+          {#if lIdx > 0}<br>{/if}
+          {#each line.trim().split(/\s+/) as word, wIdx}
           {#key `${paragraph.id}-${lIdx}-${wIdx}`}
             <span class="inline-flex flex-col items-center align-top">
               <Popover open={editingWord === `${paragraph.id}-${lIdx}-${wIdx}`}>
                 <PopoverTrigger>
                   <button
                     type="button"
-                    class="select-text cursor-pointer px-1 font-libreBaskerville font-patrickHandSc font-normal  bg-transparent border-none p-0 m-0 text-[#367dc2] text-gray-000 text-7xl relative"
+                    class="select-text cursor-pointer px-1 font-libreBaskerville font-patrickHandSc font-normal bg-transparent border-none p-0 m-0 text-[#367dc2] text-gray-600 text-5xl relative"
                     style="text-decoration-line: none; text-decoration-color: {getWordVocabulary(word)?.known ? 'gray' : 'green'}; text-decoration-style: dotted; text-decoration-opacity: {getWordVocabulary(word)?.known ? 0.2: .5};"
                     on:click|stopPropagation={() => handleWordClick(`${paragraph.id}-${lIdx}-${wIdx}`, word)}
                   >
@@ -291,10 +387,10 @@
                                 <span class="inline-flex flex-col items-center" style="flex: 0 0 auto; width: {match.endIndex - match.startIndex + 1}ch;">
                                   <span class="flex">
                                     {#each Array(match.endIndex - match.startIndex + 1) as _, i}
-                                      <span style="{match ? 'color: #FF2658;' : ''}">{word[charIdx + i]}</span>
+                                      <span style="{match ? 'color: #9D4EDD;' : ''}">{word[charIdx + i]}</span> <!-- #FF2658 is red -->
                                     {/each}
                                   </span>
-                                  <span class="text-3xl text-[#367dc2] font-patrickHandSc bg-blue-000 px-1 py-0.5 rounded mt-1 whitespace-nowrap text-center" style="display:inline-block;min-width:100%;">
+                                  <span class="text-4xl text-[#367dc2] font-patrickHandSc bg-blue-000 px-1 py-0.5 rounded mt-1 whitespace-nowrap text-center" style="display:inline-block;min-width:100%;">
                                     {match.pronunciation}
                                   </span>
                                 </span>
@@ -337,15 +433,16 @@
                 </PopoverContent>
               </Popover>
               {#if getWordVocabulary(word)?.eng_translation}
-                <span class="block text-[12px] text-gray-400 my-1 font-libreBaskerville font-bold tracking-wide">{getWordVocabulary(word)?.eng_translation}</span>
+                <span class="block text-[12px] text-gray-200 my-1 font-libreBaskerville font-bold tracking-wide">{getWordVocabulary(word)?.eng_translation}</span>
               {:else if hasTranslationForWord(word)}
-                <span class="block text-[12px] text-blue-400 my-1 font-libreBaskerville font-bold tracking-wide italic">{getTranslationForWord(word)}</span>
+                <span class="block text-[12px] text-gray-500 my-1 font-libreBaskerville font-bold tracking-wide">{getTranslationForWord(word)}</span>
               {/if}
             </span>
             {' '}
           {/key}
         {/each}
       {/each}
+      {/if}
       <br><br>
     {/each}
   </div>
@@ -365,6 +462,7 @@
   .font-roboto {
     font-family: 'Roboto Variable', serif !important;
   }
+ 
   input, input[type="text"], input[type="search"], input[type="email"], input[type="password"] {
     font-size: 2rem !important;
   }

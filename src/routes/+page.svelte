@@ -1,4 +1,5 @@
 <script>
+  import HomepageGallery from '$lib/components/HomepageGallery.svelte';
   // Clean, minimal landing page inspired by modern design
 </script>
 
@@ -6,8 +7,8 @@
   <title>Leo&Finn - Romanian Language Learning</title>
 </svelte:head>
 
-<main class="min-h-screen flex flex-col items-center justify-center p-8 max-w-7xl mx-auto ">
-  <div class="text-center flex-1 flex flex-col justify-center items-center gap-6 px-4">
+<main class="min-h-screen flex flex-col max-w-7xl mx-auto">
+  <div class="text-center h-[70vh] flex flex-col justify-center items-center gap-6 px-4 p-8">
     <!-- Brand Title -->
     <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
       <span class="text-black font-mansalva">Leo&Finn</span>
@@ -15,7 +16,7 @@
   
     <!-- Subheading / Tagline -->
     <div class="font-mono text-sm text-slate-400 tracking-wide uppercase">
-      [ enter flow state ]
+      [ build fluency daily ]
     </div>
   
     <!-- Hero Tagline -->
@@ -40,7 +41,9 @@
       </a>
     </div>
   </div>
-  <!-- Section: Component to display upto six random public lessons similare styling to collection library -->
+
+  <!-- Featured Content Gallery -->
+  <HomepageGallery />
 
   <!-- Section to suggest features -->
   <section class="text-center py-12 border-t border-slate-200 mt-8 w-full">

@@ -138,7 +138,7 @@
 		</div>
 	{:else if collection}
 		<!-- Header Section -->
-		<div class="border-b border-gray-100">
+		<div class="container  mx-auto border-b border-gray-100">
 			<div class="container mx-auto px-6 py-8">
 				<div class="mb-6">
 				<!-- Breadcrumb Navigation -->
@@ -211,7 +211,7 @@
 				{#if documents.length > 0}
 					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
 						{#each documents as document (document.id)}
-							<div class="group relative bg-gray-100 rounded-2xl border border-gray-100 hover:border-gray-100 hover:shadow-none transition-all duration-300">
+							<div class="group relative bg-gray-100 rounded-2xl border border-gray-100 hover:border-gray-100 hover:shadow-none transition-all duration-300 min-h-40">
 								<div class="p-8">
 									<a 
 										href="/lesson/{document.id}" 

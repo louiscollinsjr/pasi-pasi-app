@@ -335,7 +335,7 @@ import { onMount } from 'svelte';
 <!-- Header Section -->
 <div 
 	bind:this={headerElement}
-	class="sticky top-0 z-30 bg-white border-b border-gray-100 transition-all duration-300 ease-in-out {isHeaderSticky ? 'shadow-md' : ''}"
+	class="sticky top-20 z-30 bg-white border-b border-gray-100 transition-all duration-300 ease-in-out {isHeaderSticky ? 'shadow-none' : ''}"
 >
 	<div class="container mx-auto px-6 transition-all duration-300 ease-in-out {isHeaderSticky ? 'py-3' : 'py-4'}">
 		<!-- Breadcrumb Navigation - hide when sticky -->

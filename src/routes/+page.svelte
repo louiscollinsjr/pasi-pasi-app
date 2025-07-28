@@ -1,6 +1,25 @@
 <script>
   import HomepageGallery from '$lib/components/HomepageGallery.svelte';
   import { ArrowDown } from 'lucide-svelte';
+  import { onMount } from 'svelte';
+  
+  let scrollY = 0;
+  let scrollIndicatorOpacity = 1;
+  
+  onMount(() => {
+    const updateScrollIndicator = () => {
+      scrollY = window.scrollY;
+      // Fade out when scrolling starts, fade in when at top
+      scrollIndicatorOpacity = scrollY > 50 ? 0 : 1;
+    };
+    
+    window.addEventListener('scroll', updateScrollIndicator);
+    
+    return () => {
+      window.removeEventListener('scroll', updateScrollIndicator);
+    };
+  });
+  
   // Clean, minimal landing page inspired by modern design
 </script>
 
@@ -46,13 +65,16 @@
     </div>
 
     <!-- Scroll indicator at bottom -->
-    <div class="animate-bounce">
+    <div 
+      class="animate-bounce transition-opacity duration-600"
+      style="opacity: {scrollIndicatorOpacity}"
+    >
       <button 
         on:click={() => window.scrollTo({ top: window.innerHeight * 0.7, behavior: 'smooth' })}
-        class="p-2 rounded-full bg-slate-000 hover:bg-slate-200 transition-colors"
+        class="p-2 rounded-full bg-slate-000 hover:bg-slate-000 transition-colors"
         aria-label="Scroll down to see more content"
       >
-        <ArrowDown size={16} class="text-slate-000" />
+        <ArrowDown size={16} class="text-slate-600" />
       </button>
     </div>
   </div>
@@ -74,7 +96,7 @@
   </section>
   
   <footer class="mt-auto pt-8">
-    <p class="text-sm text-slate-500 m-0">
+    <p class="text-sm text-slate-500 m-0 text-center">
       Built with ❤️ for Romanian learners
     </p>
   </footer>

@@ -8,6 +8,7 @@
 	import type { VocabularyWord, WordTranslation } from '$lib/services/vocabularyService';
 	import { ArrowLeft, BarChart3, Text, Eye, EyeOff, Focus, Speech } from 'lucide-svelte';
 	import { writable, get } from 'svelte/store';
+import { onMount } from 'svelte';
 
 	export let lesson: any;
 	export let collection: any = null;
@@ -24,6 +25,11 @@
 	let readingMode = true; // true = reading mode, false = focus mode
 	let localVocabulary = vocabulary; // Global known words only
 	const documentTranslationsStore = writable(documentTranslations);
+
+	// Sticky header state
+	let isHeaderSticky = false;
+	let headerElement: HTMLElement;
+	let scrollY = 0;
 
 	// Floating toolbar configuration
 	let toolbarItems = [
@@ -294,6 +300,28 @@
 		// This will be handled in the template with special rendering
 		return { word, matches, wordId };
 	}
+
+	// Handle scroll for sticky header
+	function handleScroll() {
+		if (headerElement) {
+			const scrollPosition = window.scrollY;
+			// Set sticky when scrolled past the header
+			isHeaderSticky = scrollPosition > 100; // Adjust this value based on when you want the header to stick
+		}
+	}
+
+	// Add and remove scroll event listener
+	onMount(() => {
+		if (typeof window !== 'undefined') {
+			window.addEventListener('scroll', handleScroll, { passive: true });
+		}
+
+		return () => {
+			if (typeof window !== 'undefined') {
+				window.removeEventListener('scroll', handleScroll);
+			}
+		};
+	});
 </script>
 
 <!-- Floating Toolbar -->
@@ -305,73 +333,57 @@
 />
 
 <!-- Header Section -->
-<div class="container mx-auto border-b border-gray-100 bg-white">
-	<div class="container mx-auto px-6 py-8">
-		<div class="mb-6">
-			<!-- Breadcrumb Navigation -->
-			<div class="mb-4 flex items-center gap-3">
-				<a href="/library" class="text-sm text-gray-400 transition-colors hover:text-gray-600">
-					Library
-				</a>
-				{#if collection}
-					<span class="text-gray-300">/</span>
-					<a
-						href="/library/collections/{collection.id}"
-						class="text-sm text-gray-400 transition-colors hover:text-gray-600"
-					>
-						{collection.title}
-					</a>
-				{/if}
+<div 
+	bind:this={headerElement}
+	class="sticky top-0 z-30 bg-white border-b border-gray-100 transition-all duration-300 ease-in-out {isHeaderSticky ? 'shadow-md' : ''}"
+>
+	<div class="container mx-auto px-6 transition-all duration-300 ease-in-out {isHeaderSticky ? 'py-3' : 'py-4'}">
+		<!-- Breadcrumb Navigation - hide when sticky -->
+		<div class="flex items-center gap-3 mb-2 transition-all duration-300 ease-in-out {isHeaderSticky ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}">
+			<a href="/library" class="text-sm text-gray-400 transition-colors hover:text-gray-600">
+				Library
+			</a>
+			{#if collection}
 				<span class="text-gray-300">/</span>
-				<div class="rounded-lg bg-gray-50 p-1.5">
-					<Text size={14} class="text-gray-400" />
-				</div>
-			</div>
-
-			<div class="flex-1">
-				<h1 class="text-3xl font-medium break-words text-gray-900">{lesson.title}</h1>
-
-				<!-- Lesson Metrics -->
-				{#if lessonMetrics}
-					<div class="mt-3 flex items-center gap-6 text-sm text-gray-400">
-						<div class="flex items-center gap-2">
-							<BarChart3 size={16} />
-							<span>{lessonMetrics.comprehensionRate}% comprehensions</span>
-						</div>
-						<div class="flex items-center gap-2">
-							<span>{lessonMetrics.knownWords} / {lessonMetrics.totalWords} words known</span>
-						</div>
-					</div>
-				{/if}
+				<a
+					href="/library/collections/{collection.id}"
+					class="text-sm text-gray-400 transition-colors hover:text-gray-600"
+				>
+					{collection.title}
+				</a>
+			{/if}
+			<span class="text-gray-300">/</span>
+			<div class="rounded-lg bg-gray-50 p-1.5">
+				<Text size={14} class="text-gray-400" />
 			</div>
 		</div>
 
-		<!-- Controls -->
-		<!-- <div class="flex justify-end">
-      <button
-        class="inline-flex items-center gap-3 px-6 py-3 {showPronunciationGuide ? 'bg-black text-white' : 'bg-gray-50 text-gray-600'} hover:bg-gray-800 hover:text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-lg"
-        on:click={() => {
-          showPronunciationGuide = !showPronunciationGuide;
-          console.log('Pronunciation guide toggled:', showPronunciationGuide);
-        }}
-      >
-        {#if showPronunciationGuide}
-          <EyeOff size={18} />
-          <span class="hidden sm:inline">Hide Pronunciation</span>
-          <span class="sm:hidden">Hide</span>
-        {:else}
-          <Eye size={18} />
-          <span class="hidden sm:inline">Show Pronunciation</span>
-          <span class="sm:hidden">Show</span>
-        {/if}
-      </button>
-    </div> -->
+		<div class="flex items-center justify-between">
+			<h1 class="font-medium break-words text-gray-900 transition-all duration-300 ease-in-out {isHeaderSticky ? 'text-lg' : 'text-2xl'}">
+				{lesson.title}
+			</h1>
+
+			<!-- Lesson Metrics - show compact version when sticky -->
+			{#if lessonMetrics}
+				<div class="flex items-center gap-4 text-sm text-gray-500 transition-all duration-300 ease-in-out {isHeaderSticky ? 'opacity-70' : 'opacity-100'}">
+					<div class="flex items-center gap-1">
+						<BarChart3 size={14} class="text-gray-400" />
+						<span class="hidden sm:inline">{lessonMetrics.comprehensionRate}%</span>
+					</div>
+					<div class="h-4 w-px bg-gray-200"></div>
+					<div class="flex items-center gap-1">
+						<span class="hidden sm:inline">{lessonMetrics.knownWords}/{lessonMetrics.totalWords}</span>
+						<span class="text-xs text-gray-400">words</span>
+					</div>
+				</div>
+			{/if}
+		</div>
 	</div>
 </div>
 
 <!-- Main Content -->
 <div class="container mx-auto px-6 py-8">
-	<div class="font-libreBaskerville text-lg sm:text-6xl bg-white pt-12 sm:pt-24 leading-relaxed whitespace-pre-wrap">
+	<div class="font-patrickHandSC text-2xl sm:text-3xl bg-white pt-12 sm:pt-24 leading-relaxed whitespace-pre-wrap">
 		{#each lesson.data.paragraphs as paragraph, pIdx}
 			{#if sentencePerLine}
 				{@const sentences = paragraph.text.split(/([.!?]+)/).filter((s) => s.trim())}
@@ -387,7 +399,7 @@
 									<Popover open={editingWord === `${paragraph.id}-s${sIdx}-${wIdx}`}>
 										<PopoverTrigger
 											type="button"
-											class="font-libreBaskerville relative m-0 cursor-pointer border-none bg-transparent p-0 px-1 font-normal text-[#367dc2] text-gray-600 select-text"
+											class="relative m-0 cursor-pointer border-none bg-transparent p-0 px-1 font-normal text-[#367dc2] text-gray-600 select-text"
 											style="text-decoration-line: none; text-decoration-color: {getWordVocabulary(
 												word
 											)?.known
@@ -631,6 +643,10 @@
 </div>
 
 <style>
+	.font-mansalva {
+		font-family: 'Mansalva', serif;
+	}
+
 	.font-libreBaskerville {
 		font-family: 'Libre Baskerville', serif;
 	}

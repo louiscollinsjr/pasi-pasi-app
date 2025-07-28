@@ -222,7 +222,7 @@
 						<input
 							type="text"
 							bind:value={searchQuery}
-							placeholder="Search collections and lessons..."
+							placeholder="Search collections..."
 							class="w-full pl-12 pr-4 py-4  border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-base bg-gray-50 focus:bg-white transition-colors"
 						/>
 					</div>

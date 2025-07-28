@@ -97,7 +97,7 @@
   
   <footer class="mt-auto pt-8">
     <p class="text-sm text-slate-500 m-0 text-center">
-      Built with ❤️ for Romanian learners
+      Built with ❤️ for Language Learners
     </p>
   </footer>
 </main>

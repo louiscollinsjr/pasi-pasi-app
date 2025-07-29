@@ -10,6 +10,7 @@
 	import { writable, get } from 'svelte/store';
 	import { onMount } from 'svelte';
 	import { tick } from 'svelte';
+	import DisplayContent from './DisplayContent.svelte';
 
 	export let lesson: any;
 	export let collection: any = null;
@@ -36,21 +37,21 @@
 		{
 			id: 'reading-mode',
 			icon: Text,
-			label: 'Reading Mode',
+			label: 'Reading',
 			action: () => toggleMode('reading'),
 			active: readingMode
 		},
 		{
 			id: 'focus-mode',
 			icon: Focus,
-			label: 'Focus Mode',
+			label: 'Focus',
 			action: () => toggleMode('focus'),
 			active: !readingMode
 		},
 		{
 			id: 'pronunciation',
 			icon: Speech,
-			label: 'Pronunciation Guide',
+			label: 'Pronunciation',
 			action: () => togglePronunciation(),
 			active: showPronunciationGuide
 		}
@@ -59,13 +60,21 @@
 	// Toolbar action handlers
 	function toggleMode(mode) {
 		readingMode = mode === 'reading';
+		
+		// Disable pronunciation guide when switching to reading mode
+		if (mode === 'reading') {
+			showPronunciationGuide = false;
+		}
 	}
 
 	function togglePronunciation() {
 		showPronunciationGuide = !showPronunciationGuide;
+		
+		// Switch to focus mode if currently in reading mode
+		if (readingMode) {
+			toggleMode('focus');
+		}
 	}
-
-	
 
 	// Update local data when props change
 	$: localVocabulary = { ...vocabulary };
@@ -309,341 +318,60 @@
 			</h1>
 
 			<!-- Lesson Metrics - show compact version when sticky -->
-			{#if lessonMetrics}
-				<div class="flex items-center gap-4 text-sm text-gray-500 transition-all duration-300 ease-in-out {isHeaderSticky ? 'opacity-70' : 'opacity-100'}">
-					<div class="flex items-center gap-1">
-						<BarChart3 size={14} class="text-gray-400" />
-						<span class="hidden sm:inline">{lessonMetrics.comprehensionRate}%</span>
+				{#if lessonMetrics}
+					<div class="flex items-center gap-4 text-sm text-gray-500 transition-all duration-300 ease-in-out {isHeaderSticky ? 'opacity-70' : 'opacity-100'}">
+						<div class="flex items-center gap-1">
+							<BarChart3 size={14} class="text-gray-400" />
+							<span class="hidden sm:inline">{lessonMetrics.comprehensionRate}%</span>
+						</div>
+						<div class="h-4 w-px bg-gray-200"></div>
+						<div class="flex items-center gap-1">
+							<span class="hidden sm:inline">{lessonMetrics.knownWords}/{lessonMetrics.totalWords}</span>
+							<span class="text-xs text-gray-400">words</span>
+						</div>
 					</div>
-					<div class="h-4 w-px bg-gray-200"></div>
-					<div class="flex items-center gap-1">
-						<span class="hidden sm:inline">{lessonMetrics.knownWords}/{lessonMetrics.totalWords}</span>
-						<span class="text-xs text-gray-400">words</span>
-					</div>
-				</div>
-			{/if}
+				{/if}
+			</div>
 		</div>
 	</div>
-</div>
 
 <!-- Main Content -->
-<div class="container mx-auto px-6 py-8 {readingMode ? 'theme-reading' : 'theme-focus'}">
-	<div class="font-patrickHandSC text-2xl sm:text-3xl bg-white pt-12 sm:pt-24 leading-relaxed whitespace-pre-wrap">
-		{#each lesson.data.paragraphs as paragraph, pIdx}
-			{#if !readingMode}
-				{@const sentences = paragraph.text.split(/([.!?]+)/).filter((s) => s.trim())}
-				{#each sentences as sentence, sIdx}
-					{#if sentence.match(/[.!?]/)}
-						<!-- This is punctuation, render it with the previous sentence -->
-					{:else if sentence.trim()}
-						{#if sIdx > 0}<br /><br />{/if}
-						{#each sentence.trim().split(/\s+/) as word, wIdx}
-							{#key `${paragraph.id}-s${sIdx}-${wIdx}`}
-								<span class="inline-flex flex-col items-center align-top">
-									<!-- Word rendering logic here -->
-									<Popover open={editingWord === `${paragraph.id}-s${sIdx}-${wIdx}`}>
-										<PopoverTrigger
-											type="button"
-											class="relative m-0 cursor-pointer border-none bg-transparent p-0 px-1 font-normal text-[#367dc2] text-gray-600 select-text"
-											style="text-decoration-line: none; text-decoration-color: {getWordVocabulary(
-												word
-											)?.known
-												? 'gray'
-												: 'green'}; text-decoration-style: dotted; text-decoration-opacity: {getWordVocabulary(
-												word
-											)?.known
-												? 0.2
-												: 0.5};"
-											on:click={(e) => {
-												e.stopPropagation();
-												handleWordClick(`${paragraph.id}-s${sIdx}-${wIdx}`, word);
-											}}
-										>
-											{#if showPronunciationGuide}
-												{@const matches =
-													word.pronunciationMatches ?? findPronunciationMatches(word)}
-												{#if matches.length > 0}
-													<!-- Render word with aligned pronunciation annotations -->
-													<div class="inline-flex flex-col items-start">
-														<!-- Word with highlighted letters -->
-														<div class="flex">
-															{#each word.split('') as char, charIdx}
-																{@const currentMatch = matches.find(
-																	(m) => m.startIndex === charIdx
-																)}
-																{#if currentMatch}
-																	<span
-																		class="inline-flex flex-col items-center"
-																		style="flex: 0 0 auto; width: {currentMatch.endIndex -
-																			currentMatch.startIndex +
-																			1}ch;"
-																	>
-																		<span class="flex">
-																			{#each Array(currentMatch.endIndex - currentMatch.startIndex + 1) as _, i}
-																				<span style="color: #9D4EDD;">{word[charIdx + i]}</span>
-																				<!--#9D4EDD is purple-->
-																			{/each}
-																		</span>
-																		<span
-																			class="font-patrickHandSc bg-blue-000 mt-1 rounded px-1 py-0.5 text-center sm:text-2xl whitespace-nowrap text-[#367dc2]"
-																			style="display:inline-block;min-width:100%;"
-																		>
-																			{currentMatch.pronunciation}
-																		</span>
-																	</span>
-																{:else if !matches.some((m) => charIdx > m.startIndex && charIdx <= m.endIndex)}
-																	<span>{char}</span>
-																{/if}
-															{/each}
-														</div>
-													</div>
-												{:else}
-													{word}
-												{/if}
-											{:else}
-												{word}
-											{/if}
-										</PopoverTrigger>
-										<PopoverContent>
-											<div class="flex flex-col gap-2">
-												<Button
-													on:click={() => markKnown(word)}
-													variant="ghost"
-													class="mb-2 w-full text-xl">Mark as Known</Button
-												>
-												<form on:submit|preventDefault={() => saveDocumentTranslationOnly(word)}>
-													<Input
-														placeholder="Add translation"
-														bind:value={translationInput}
-														on:input={() => updateDocumentTranslation(word, translationInput)}
-														class="mb-2 text-xl"
-														autofocus
-													/>
-													<div class="flex gap-2">
-														<Button type="submit" variant="default" class="flex-1 text-xl font-bold"
-															>Update</Button
-														>
-														{#if hasTranslationForWord(word)}
-															<Button
-																on:click={() => deleteTranslation(word)}
-																variant="destructive"
-																class="text-xl font-bold">Delete</Button
-															>
-														{/if}
-													</div>
-												</form>
-											</div>
-										</PopoverContent>
-									</Popover>
-									{#if getWordVocabulary(word)?.eng_translation}
-										<span
-											class="font-libreBaskerville my-1 block text-[12px] font-bold tracking-wide text-gray-200"
-											>{getWordVocabulary(word)?.eng_translation}</span
-										>
-									{:else if hasTranslationForWord(word)}
-										<span
-											class="font-roboto my-2 mt-4 block text-xl font-bold tracking-wide text-gray-900"
-											>{getTranslationForWord(word)}</span
-										>
-									{/if}
-								</span>
-								{' '}
-							{/key}
-						{/each}
-						<!-- Add punctuation if next item is punctuation -->
-						{#if sentences[sIdx + 1] && sentences[sIdx + 1].match(/[.!?]/)}
-							<span class="inline-flex flex-col items-center align-top">
-								<button
-									type="button"
-									class="relative m-0 cursor-pointer border-none bg-transparent p-0 px-1 font-normal text-[#367dc2] text-gray-600 select-text"
-								>
-									{sentences[sIdx + 1]}
-								</button>
-							</span>
-						{/if}
-					{/if}
-				{/each}
-			{:else}
-				{#each paragraph.text.split(/\n/) as line, lIdx}
-					{#if lIdx > 0}<br />{/if}
-					{#each line.trim().split(/\s+/) as word, wIdx}
-						{#key `${paragraph.id}-${lIdx}-${wIdx}`}
-							<span class="inline-flex flex-col items-center align-top">
-								<Popover open={editingWord === `${paragraph.id}-${lIdx}-${wIdx}`}>
-									<PopoverTrigger
-										type="button"
-										class="font-libreBaskerville font-patrickHandSc relative m-0 cursor-pointer border-none bg-transparent p-0 px-1 text-5xl font-normal text-[#367dc2] text-gray-600 select-text"
-										style="text-decoration-line: none; text-decoration-color: {getWordVocabulary(
-											word
-										)?.known
-											? 'gray'
-											: 'green'}; text-decoration-style: dotted; text-decoration-opacity: {getWordVocabulary(
-											word
-										)?.known
-											? 0.2
-											: 0.5};"
-										on:click={(e) => {
-											e.stopPropagation();
-											handleWordClick(`${paragraph.id}-${lIdx}-${wIdx}`, word);
-										}}
-									>
-										{#if showPronunciationGuide}
-											{@const matches = word.pronunciationMatches ?? findPronunciationMatches(word)}
-											{#if matches.length > 0}
-												<!-- Render word with aligned pronunciation annotations -->
-												<div class="inline-flex flex-col items-start">
-													<!-- Word with highlighted letters -->
-													<div class="flex">
-														{#each word.split('') as char, charIdx}
-															{#if matches.some((m) => m.startIndex === charIdx)}
-																{@const match = matches.find((m) => m.startIndex === charIdx)}
-																<span
-																	class="inline-flex flex-col items-center"
-																	style="flex: 0 0 auto; width: {match.endIndex -
-																		match.startIndex +
-																		1}ch;"
-																>
-																	<span class="flex">
-																		{#each Array(match.endIndex - match.startIndex + 1) as _, i}
-																			<span style={match ? 'color: #9D4EDD;' : ''}
-																				>{word[charIdx + i]}</span
-																			>
-																			<!-- #FF2658 is red -->
-																		{/each}
-																	</span>
-																	<span
-																		class="font-patrickHandSc bg-blue-000 mt-1 rounded px-1 py-0.5 text-center text-4xl whitespace-nowrap text-[#367dc2]"
-																		style="display:inline-block;min-width:100%;"
-																	>
-																		{match.pronunciation}
-																	</span>
-																</span>
-															{:else if !matches.some((m) => charIdx > m.startIndex && charIdx <= m.endIndex)}
-																<span class="inline-flex flex-col items-center">
-																	<span>{char}</span>
-																	<span class="mt-1 h-4 text-[10px]"></span>
-																</span>
-															{/if}
-														{/each}
-													</div>
-												</div>
-											{:else}
-												{word}
-											{/if}
-										{:else}
-											{word}
-										{/if}
-									</PopoverTrigger>
-									<PopoverContent>
-										<div class="flex flex-col gap-2">
-											<Button
-												on:click={() => markKnown(word)}
-												variant="ghost"
-												class="mb-2 w-full text-xl">Mark as Known</Button
-											>
-											<form on:submit|preventDefault={() => saveDocumentTranslationOnly(word)}>
-												<Input
-													placeholder="Add translation"
-													bind:value={translationInput}
-													on:input={() => updateDocumentTranslation(word, translationInput)}
-													class="mb-2 text-xl"
-													autofocus
-												/>
-												<div class="flex gap-2">
-													<Button type="submit" variant="default" class="flex-1 text-xl font-bold"
-														>Update</Button
-													>
-													{#if hasTranslationForWord(word)}
-														<Button
-															on:click={() => deleteTranslation(word)}
-															variant="destructive"
-															class="text-xl font-bold">Delete</Button
-														>
-													{/if}
-												</div>
-											</form>
-										</div>
-									</PopoverContent>
-								</Popover>
-								{#if getWordVocabulary(word)?.eng_translation}
-									<span
-										class="font-libreBaskerville my-1 block text-[12px] font-bold tracking-wide text-gray-200"
-										>{getWordVocabulary(word)?.eng_translation}</span
-									>
-								{:else if hasTranslationForWord(word)}
-									<span
-										class="font-libreBaskerville my-1 block text-[12px] font-bold tracking-wide text-gray-500"
-										>{getTranslationForWord(word)}</span
-									>
-								{/if}
-							</span>
-							{' '}
-						{/key}
-					{/each}
-				{/each}
-			{/if}
-			<br /><br />
-		{/each}
-	</div>
+<div class="container mx-auto px-6 py-8 max-w-[710px] {readingMode ? 'typography-reading-mode' : 'typography-focus-mode'}">
+  <div class="bg-white pt-12 sm:pt-24 leading-relaxed whitespace-pre-wrap">
+    <DisplayContent
+      paragraphs={lesson.data.paragraphs}
+      {readingMode}
+      {showPronunciationGuide}
+      {editingWord}
+      {translationInput}
+      handleWordClick={handleWordClick}
+      markKnown={markKnown}
+      saveDocumentTranslationOnly={saveDocumentTranslationOnly}
+      updateDocumentTranslation={updateDocumentTranslation}
+      deleteTranslation={deleteTranslation}
+      hasTranslationForWord={hasTranslationForWord}
+      getWordVocabulary={getWordVocabulary}
+      getTranslationForWord={getTranslationForWord}
+    />
+  </div>
 </div>
 
 <style>
-	.font-mansalva {
-		font-family: 'Mansalva', serif;
-	}
+  .pronunciation-guide {
+    font-family: 'Patrick Hand SC', cursive;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    color: #4b5563;
+  }
 
-	.font-libreBaskerville {
-		font-family: 'Libre Baskerville', serif;
-	}
+  :global(body) {
+    font-family: 'Roboto Variable', sans-serif;
+  }
 
-	.font-patrickHand {
-		font-family: 'Patrick Hand', cursive;
-	}
-
-	.font-patrickHandSC {
-		font-family: 'Patrick Hand SC', cursive;
-	}
-
-	.font-roboto {
-		font-family: 'Roboto Variable', sans-serif;
-	}
-
-	.pronunciation-guide {
-		font-family: 'Patrick Hand SC', cursive;
-		font-size: 0.75rem;
-		line-height: 1.2;
-		color: #4b5563;
-	}
-
-	:global(body) {
-		font-family: 'Roboto Variable', sans-serif;
-	}
-
-	.popover-content {
-		z-index: 50;
-		min-width: 8rem;
-		overflow: hidden;
-		@apply rounded-md border bg-white p-1 text-popover-foreground shadow-md outline-none;
-	}
-
-	.theme-reading {
-		/* Reading mode styles (paragraphs) */
-		line-height: 1.6;
-		letter-spacing: 0.01em;
-	}
-
-	.theme-reading .title {
-		font-size: .5rem;
-		font-weight: bold;
-	}
-
-	.theme-reading .content {
-		font-size: .5rem;
-	}
-
-	.theme-focus {
-		/* Focus mode styles (sentence-per-line) */
-		line-height: 2;
-		letter-spacing: 0.02em;
-	}
+  .popover-content {
+    z-index: 50;
+    min-width: 8rem;
+    overflow: hidden;
+    @apply rounded-md border bg-white p-1 text-popover-foreground shadow-md outline-none;
+  }
 </style>

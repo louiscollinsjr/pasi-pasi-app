@@ -26,35 +26,35 @@
   const dispatch = createEventDispatcher();
 
   // Default items for LessonView
-  const defaultItems = [
-    {
-      id: 'back',
-      icon: ChevronLeft,
-      label: 'Back',
-      action: () => history.back()
-    },
-    {
-      id: 'reading-mode',
-      icon: BookOpen,
-      label: 'Reading Mode',
-      action: () => dispatch('toggle-mode', 'reading'),
-      active: false
-    },
-    {
-      id: 'focus-mode',
-      icon: Focus,
-      label: 'Focus Mode',
-      action: () => dispatch('toggle-mode', 'focus'),
-      active: false
-    },
-    {
-      id: 'pronunciation',
-      icon: Speech,
-      label: 'Pronunciation',
-      action: () => dispatch('toggle-pronunciation'),
-      active: false
-    }
-  ];
+  // const defaultItems = [
+  //   {
+  //     id: 'back',
+  //     icon: ChevronLeft,
+  //     label: 'Back',
+  //     action: () => history.back()
+  //   },
+  //   {
+  //     id: 'reading-mode',
+  //     icon: BookOpen,
+  //     label: 'Reading Mode',
+  //     action: () => dispatch('toggle-mode', 'reading'),
+  //     active: false
+  //   },
+  //   {
+  //     id: 'focus-mode',
+  //     icon: Focus,
+  //     label: 'Focus Mode',
+  //     action: () => dispatch('toggle-mode', 'focus'),
+  //     active: false
+  //   },
+  //   {
+  //     id: 'pronunciation',
+  //     icon: Speech,
+  //     label: 'Pronunciation',
+  //     action: () => dispatch('toggle-pronunciation'),
+  //     active: false
+  //   }
+  // ];
 
   // Use provided items or defaults
   $: toolbarItems = items.length > 0 ? items : defaultItems;

@@ -9,6 +9,7 @@
 	import { ArrowLeft, BarChart3, Text, Eye, EyeOff, Focus, Speech } from 'lucide-svelte';
 	import { writable, get } from 'svelte/store';
 	import { onMount } from 'svelte';
+	import { tick } from 'svelte';
 
 	export let lesson: any;
 	export let collection: any = null;
@@ -21,8 +22,7 @@
 	let editingWord = null;
 	let translationInput = '';
 	let showPronunciationGuide = false;
-	let sentencePerLine = false; // Toggle between sentence-per-line vs paragraph mode
-	let readingMode = true; // true = reading mode, false = focus mode
+	let readingMode = true; // true = reading mode (paragraphs), false = focus mode (sentence-per-line)
 	let localVocabulary = vocabulary; // Global known words only
 	const documentTranslationsStore = writable(documentTranslations);
 
@@ -31,52 +31,8 @@
 	let headerElement: HTMLElement;
 	let scrollY = 0;
 
-	// Floating toolbar configuration
-	let toolbarItems = [
-		{
-			id: 'back',
-			icon: ArrowLeft,
-			label: 'Back',
-			action: () => history.back()
-		},
-		{
-			id: 'reading-mode',
-			icon: Text,
-			label: 'Reading Mode',
-			action: () => toggleMode('reading'),
-			active: readingMode
-		},
-		{
-			id: 'focus-mode',
-			icon: Focus,
-			label: 'Focus Mode',
-			action: () => toggleMode('focus'),
-			active: !readingMode
-		},
-		{
-			id: 'pronunciation',
-			icon: Speech,
-			label: 'Pronunciation Guide',
-			action: () => togglePronunciation(),
-			active: showPronunciationGuide
-		},
-		{
-			id: 'sentence-mode',
-			icon: Eye,
-			label: sentencePerLine ? 'Paragraph Mode' : 'Sentence Mode',
-			action: () => toggleSentenceMode(),
-			active: sentencePerLine
-		}
-	];
-
 	// Update toolbar items reactively
 	$: toolbarItems = [
-		// {
-		//   id: 'back',
-		//   icon: ArrowLeft,
-		//   label: 'Back',
-		//   action: () => history.back()
-		// },
 		{
 			id: 'reading-mode',
 			icon: Text,
@@ -97,13 +53,6 @@
 			label: 'Pronunciation Guide',
 			action: () => togglePronunciation(),
 			active: showPronunciationGuide
-		},
-		{
-			id: 'sentence-mode',
-			icon: Eye,
-			label: sentencePerLine ? 'Paragraph Mode' : 'Sentence Mode',
-			action: () => toggleSentenceMode(),
-			active: sentencePerLine
 		}
 	];
 
@@ -116,11 +65,7 @@
 		showPronunciationGuide = !showPronunciationGuide;
 	}
 
-	function toggleSentenceMode() {
-		sentencePerLine = !sentencePerLine;
-	}
-
-	import { tick } from 'svelte';
+	
 
 	// Update local data when props change
 	$: localVocabulary = { ...vocabulary };
@@ -382,10 +327,10 @@
 </div>
 
 <!-- Main Content -->
-<div class="container mx-auto px-6 py-8">
+<div class="container mx-auto px-6 py-8 {readingMode ? 'theme-reading' : 'theme-focus'}">
 	<div class="font-patrickHandSC text-2xl sm:text-3xl bg-white pt-12 sm:pt-24 leading-relaxed whitespace-pre-wrap">
 		{#each lesson.data.paragraphs as paragraph, pIdx}
-			{#if sentencePerLine}
+			{#if !readingMode}
 				{@const sentences = paragraph.text.split(/([.!?]+)/).filter((s) => s.trim())}
 				{#each sentences as sentence, sIdx}
 					{#if sentence.match(/[.!?]/)}
@@ -679,5 +624,26 @@
 		min-width: 8rem;
 		overflow: hidden;
 		@apply rounded-md border bg-white p-1 text-popover-foreground shadow-md outline-none;
+	}
+
+	.theme-reading {
+		/* Reading mode styles (paragraphs) */
+		line-height: 1.6;
+		letter-spacing: 0.01em;
+	}
+
+	.theme-reading .title {
+		font-size: .5rem;
+		font-weight: bold;
+	}
+
+	.theme-reading .content {
+		font-size: .5rem;
+	}
+
+	.theme-focus {
+		/* Focus mode styles (sentence-per-line) */
+		line-height: 2;
+		letter-spacing: 0.02em;
 	}
 </style>

@@ -8,7 +8,7 @@
 	import type { VocabularyWord, WordTranslation } from '$lib/services/vocabularyService';
 	import { ArrowLeft, BarChart3, Text, Eye, EyeOff, Focus, Speech } from 'lucide-svelte';
 	import { writable, get } from 'svelte/store';
-import { onMount } from 'svelte';
+	import { onMount } from 'svelte';
 
 	export let lesson: any;
 	export let collection: any = null;
@@ -21,7 +21,7 @@ import { onMount } from 'svelte';
 	let editingWord = null;
 	let translationInput = '';
 	let showPronunciationGuide = false;
-	let sentencePerLine = true; // Toggle between sentence-per-line vs paragraph mode
+	let sentencePerLine = false; // Toggle between sentence-per-line vs paragraph mode
 	let readingMode = true; // true = reading mode, false = focus mode
 	let localVocabulary = vocabulary; // Global known words only
 	const documentTranslationsStore = writable(documentTranslations);

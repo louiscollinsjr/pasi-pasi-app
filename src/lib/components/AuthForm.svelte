@@ -7,6 +7,7 @@ let email = '';
 let loading = false;
 let message = '';
 let messageType: 'success' | 'error' = 'success';
+let agreedToTerms = false;
 
 // Subscribe to the global user store
 $: user = $userStore;
@@ -74,7 +75,7 @@ async function logout() {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
           </svg>
         </div> -->
-        <h2 class="text-3xl font-semibold text-gray-900">Welcome to Pași-Pași</h2>
+        <h2 class="text-5xl font-semibold text-gray-900 pb-6"><span class="font-bold font-mansalva">Leo & Finn</span></h2>
         <p class="text-gray-600">Enter your email to get started with magic link authentication</p>
       </div>
 
@@ -90,14 +91,27 @@ async function logout() {
             class="w-full h-11 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 disabled:bg-gray-50 disabled:text-gray-500"
           />
         </div>
-        
+        <!-- Terms of Service Checkbox -->
+        <div class="flex items-start mt-4 py-3">
+          <div class="flex items-center h-5">
+            <input 
+              id="terms" 
+              type="checkbox" 
+              bind:checked={agreedToTerms}
+              class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+            />
+          </div>
+          <label for="terms" class="ms-2 text-sm font-medium text-gray-700">
+            I agree to the <a href="/terms" class="text-blue-600 hover:underline">Terms of Service</a> and <a href="/privacy" class="text-blue-600 hover:underline">Privacy Policy</a>
+          </label>
+        </div>
         <button 
           type="submit"
-          disabled={loading || !email.trim()}
-          class="w-full h-11 bg-black hover:bg-black/80 text-white text-lg font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200"
+          disabled={loading || !email.trim() || !agreedToTerms}
+          class="w-full h-11 bg-black hover:bg-black/80 text-white text-lg font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 rounded-lg"
         >
           {#if loading}
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -133,3 +147,9 @@ async function logout() {
     </div>
   {/if}
 </div>
+
+<style>
+  .font-mansalva {
+    font-family: 'Mansalva', sans-serif;
+  }
+</style>

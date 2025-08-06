@@ -41,18 +41,18 @@ export const rm_en_rules: PronunciationRule[] = [
 
   // --- Standard Consonants (mostly as in English) ---
   // Included for completeness.
-  { pattern: 'b', phoneme: 'b', explanation: "like 'b' in 'bed'" },
-  { pattern: 'd', phoneme: 'd', explanation: "like 'd' in 'dog'" },
-  { pattern: 'f', phoneme: 'f', explanation: "like 'f' in 'fish'" },
-  { pattern: 'g', phoneme: 'g', explanation: "like 'g' in 'go' (always hard, never like in 'gem')" },
-  { pattern: 'h', phoneme: 'h', explanation: "like 'h' in 'hat'" },
-  { pattern: 'k', phoneme: 'k', explanation: "like 'k' in 'king' (unaspirated, no puff of air)" },
-  { pattern: 'l', phoneme: 'l', explanation: "like 'l' in 'love'" },
-  { pattern: 'm', phoneme: 'm', explanation: "like 'm' in 'man'" },
-  { pattern: 'n', phoneme: 'n', explanation: "like 'n' in 'no'" },
-  { pattern: 'p', phoneme: 'p', explanation: "like 'p' in 'spy' (unaspirated, no puff of air)" },
-  { pattern: 's', phoneme: 's', explanation: "like 's' in 'see' (never like 'z')" },
-  { pattern: 't', phoneme: 't', explanation: "like 't' in 'stop' (unaspirated, no puff of air)" },
-  { pattern: 'v', phoneme: 'v', explanation: "like 'v' in 'vest'" },
-  { pattern: 'z', phoneme: 'z', explanation: "like 'z' in 'zoo'" }
+//   { pattern: 'b', phoneme: 'b', explanation: "like 'b' in 'bed'" },
+//   { pattern: 'd', phoneme: 'd', explanation: "like 'd' in 'dog'" },
+//   { pattern: 'f', phoneme: 'f', explanation: "like 'f' in 'fish'" },
+//   { pattern: 'g', phoneme: 'g', explanation: "like 'g' in 'go' (always hard, never like in 'gem')" },
+//   { pattern: 'h', phoneme: 'h', explanation: "like 'h' in 'hat'" },
+//   { pattern: 'k', phoneme: 'k', explanation: "like 'k' in 'king' (unaspirated, no puff of air)" },
+//   { pattern: 'l', phoneme: 'l', explanation: "like 'l' in 'love'" },
+//   { pattern: 'm', phoneme: 'm', explanation: "like 'm' in 'man'" },
+//   { pattern: 'n', phoneme: 'n', explanation: "like 'n' in 'no'" },
+//   { pattern: 'p', phoneme: 'p', explanation: "like 'p' in 'spy' (unaspirated, no puff of air)" },
+//   { pattern: 's', phoneme: 's', explanation: "like 's' in 'see' (never like 'z')" },
+//   { pattern: 't', phoneme: 't', explanation: "like 't' in 'stop' (unaspirated, no puff of air)" },
+//   { pattern: 'v', phoneme: 'v', explanation: "like 'v' in 'vest'" },
+//   { pattern: 'z', phoneme: 'z', explanation: "like 'z' in 'zoo'" }
 ];

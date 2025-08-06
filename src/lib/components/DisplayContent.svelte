@@ -17,10 +17,12 @@
   export let hasTranslationForWord;
   export let getWordVocabulary;
   export let getTranslationForWord;
+  // New props to drive pronunciation rules dynamically
+  export let targetLang: string = 'ro';
+  export let nativeLang: string = 'en';
 
-  // Defaulting to English ('en'); make dynamic later if needed
-  const nativeLang = 'en';
-  const rules = getPronunciationRules(nativeLang);
+  // Compute rules from target and native languages
+  $: rules = getPronunciationRules(targetLang, nativeLang);
 </script>
 
 <div>

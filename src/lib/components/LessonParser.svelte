@@ -39,8 +39,8 @@ Cultura română este bogată și diversă. Românii sunt cunoscuți pentru ospi
   import { getPronunciationRules, findPronunciationMatches } from '$lib/pronunciation';
 
   function enrichParsedLesson(parsedLesson: ParsedLesson) {
-    // Use the user's selected native language to drive pronunciation rules
-    const rules = getPronunciationRules(nativeLanguage);
+    // Use the detected/selected source language as target, and user profile native language
+    const rules = getPronunciationRules(sourceLanguageCode, nativeLanguage);
 
     for (const paragraph of parsedLesson.paragraphs) {
       for (const sentence of paragraph.sentences) {

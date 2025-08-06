@@ -1,14 +1,40 @@
 import { ro_en_rules } from './ro-en';
 import { ro_fr_rules } from './ro-fr';
+import { rm_en_rules } from './rom-en';
 import type { PronunciationRule, PronunciationMatch } from './types';
 
-const guides: Record<string, PronunciationRule[]> = {
-  en: ro_en_rules,
-  fr: ro_fr_rules,
+// Language labels (minimal set for UI)
+const LANG_LABELS: Record<string, string> = {
+  en: 'English',
+  fr: 'French',
+  ro: 'Romanian',
+  rom: 'Romani'
 };
 
-export function getPronunciationRules(nativeLang: string = 'en'): PronunciationRule[] {
-  return guides[nativeLang] || guides['en'];
+// Guides organized by target language -> native (learner) language
+const guidesByTarget: Record<string, Record<string, PronunciationRule[]>> = {
+  ro: {
+    en: ro_en_rules,
+    fr: ro_fr_rules
+  },
+  rom: {
+    en: rm_en_rules
+  }
+};
+
+export function getPronunciationRules(targetLang: string = 'ro', nativeLang: string = 'en'): PronunciationRule[] {
+  const target = guidesByTarget[targetLang];
+  if (!target) return guidesByTarget['ro']?.['en'] || [];
+  return target[nativeLang] || target['en'] || [];
+}
+
+export function listGuidesForTarget(targetLang: string): { native: string; label: string }[] {
+  const target = guidesByTarget[targetLang] || {};
+  return Object.keys(target).map((native) => ({ native, label: LANG_LABELS[native] || native.toUpperCase() }));
+}
+
+export function getLanguageLabel(code: string): string {
+  return LANG_LABELS[code] || code.toUpperCase();
 }
 
 export function findPronunciationMatches(word: string, rules: PronunciationRule[]): PronunciationMatch[] {

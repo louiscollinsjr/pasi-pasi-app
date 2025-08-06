@@ -3,7 +3,9 @@
 	import { Input } from '$lib/components/ui/input/index';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FloatingToolbar from '$lib/components/FloatingToolbar.svelte';
-	import { getPronunciationRules, findPronunciationMatches } from '$lib/pronunciation';
+	import { getPronunciationRules, findPronunciationMatches, getLanguageLabel } from '$lib/pronunciation';
+	import PronunciationGuideModal from '$lib/components/PronunciationGuideModal.svelte';
+	import { userProfile } from '$lib/stores/userProfileStore';
 	import { VocabularyService } from '$lib/services/vocabularyService';
 	import type { VocabularyWord, WordTranslation } from '$lib/services/vocabularyService';
 	import { ArrowLeft, BarChart3, Text, Eye, EyeOff, Focus, Speech } from 'lucide-svelte';
@@ -27,14 +29,52 @@
 	let localVocabulary = vocabulary; // Global known words only
 	const documentTranslationsStore = writable(documentTranslations);
 
+	// Target and native language for pronunciation guide
+	let targetLang: string = lesson?.language_code || 'ro';
+	$: targetLang = lesson?.language_code || 'ro';
+	let selectedNativeLang: string = $userProfile.profile?.native_language || 'en';
+	let rules = getPronunciationRules(targetLang, selectedNativeLang);
+	let showGuideModal = false;
+
+	// Detect mobile viewport to disable modal on small screens
+	let isMobile = false;
+	function updateIsMobile() {
+		if (typeof window !== 'undefined' && 'matchMedia' in window) {
+			isMobile = window.matchMedia('(max-width: 639px)').matches; // Tailwind 'sm' breakpoint
+		}
+	}
+
+	// Ensure profile is loaded to get default native language
+	onMount(async () => {
+		// initialize and listen for viewport changes
+		updateIsMobile();
+		window.addEventListener('resize', updateIsMobile);
+
+		if (!$userProfile.profile) {
+			await userProfile.fetchProfile();
+			selectedNativeLang = $userProfile.profile?.native_language || selectedNativeLang;
+		}
+
+		// cleanup listener on destroy
+		return () => {
+			window.removeEventListener('resize', updateIsMobile);
+		};
+	});
+
+	// Recompute when selection or target changes
+	$: rules = getPronunciationRules(targetLang, selectedNativeLang);
+
 	// Default native language for pronunciation; make dynamic later
-	const nativeLang = 'en';
-	const rules = getPronunciationRules(nativeLang);
+	// const nativeLang = 'en';
+	// const rules = getPronunciationRules(nativeLang);
 
 	// Sticky header state
 	let isHeaderSticky = false;
 	let headerElement: HTMLElement;
 	let scrollY = 0;
+
+	// Ensure modal never stays open on mobile
+	$: if (isMobile && showGuideModal) showGuideModal = false;
 
 	// Update toolbar items reactively
 	$: toolbarItems = [
@@ -314,6 +354,22 @@
 			<div class="rounded-lg bg-gray-50 p-1.5">
 				<Text size={14} class="text-gray-400" />
 			</div>
+
+<!-- Pronunciation Guide Modal (disabled on mobile: not rendered) -->
+{#if !isMobile}
+  <PronunciationGuideModal
+    bind:isOpen={showGuideModal}
+    {targetLang}
+    currentNativeLang={selectedNativeLang}
+    on:close={() => (showGuideModal = false)}
+    on:select={(e) => {
+      const { native } = e.detail;
+      selectedNativeLang = native;
+      showGuideModal = false;
+    }}
+  />
+{/if}
+
 		</div>
 
 		<div class="flex items-center justify-between">
@@ -321,10 +377,29 @@
 				{lesson.title}
 				<!-- Language badge -->
 				{#if lesson.language_code}
-					<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-200 text-gray-700 uppercase tracking-wide">
+					<span
+						class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-200 text-gray-700 uppercase tracking-wide"
+						title={`Lesson language: ${getLanguageLabel(lesson.language_code)}`}
+					>
 						{lesson.language_code}
 					</span>
-				{/if}
+					<!-- Guide badge (desktop/tablet): clickable opens modal -->
+          <button
+            type="button"
+            class="hidden sm:inline-flex items-center ml-2 px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700 uppercase tracking-wide hover:bg-gray-200"
+            on:click={() => { if (!isMobile) showGuideModal = true; }}
+            title={`Select pronunciation guide (current: ${getLanguageLabel(selectedNativeLang)} for ${getLanguageLabel(lesson.language_code)})`}
+          >
+            {selectedNativeLang.toUpperCase()}
+          </button>
+          <!-- Guide badge (mobile): non-interactive -->
+          <span
+            class="inline-flex sm:hidden items-center ml-2 px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-500 uppercase tracking-wide cursor-not-allowed opacity-70"
+            title="Pronunciation guide selection is disabled on mobile"
+          >
+            {selectedNativeLang.toUpperCase()}
+          </span>
+        {/if}
 			</h1>
 
 			<!-- Lesson Metrics - show compact version when sticky -->
@@ -362,6 +437,8 @@
       hasTranslationForWord={hasTranslationForWord}
       getWordVocabulary={getWordVocabulary}
       getTranslationForWord={getTranslationForWord}
+      targetLang={targetLang}
+      nativeLang={selectedNativeLang}
     />
   </div>
 </div>

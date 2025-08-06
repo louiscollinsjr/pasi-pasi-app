@@ -5,7 +5,10 @@
 * - explanation: A user-friendly explanation tailored to the native language.
  */
 export interface PronunciationRule {
-  pattern: string;
+  // Can be a plain string (matched with startsWith) or a RegExp.
+  // If RegExp is used, it is tested against the current position (substring)
+  // and must match from the beginning of that substring (e.g., use ^ to anchor).
+  pattern: string | RegExp;
   phoneme: string;
   explanation: string;
 }

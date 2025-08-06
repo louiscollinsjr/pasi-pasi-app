@@ -211,8 +211,8 @@
 				{#if documents.length > 0}
 					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
 						{#each documents as document (document.id)}
-							<div class="group relative bg-gray-100 rounded-2xl border border-gray-100 hover:border-gray-100 hover:shadow-none transition-all duration-300 min-h-40">
-								<div class="p-8">
+							<div class="group relative bg-gray-100 rounded-2xl border border-gray-100 hover:border-gray-100 hover:shadow-none transition-all duration-300 min-h-48 flex flex-col">
+								<div class="p-8 flex-1">
 									<a 
 										href="/lesson/{document.id}" 
 										class="flex items-start gap-4"
@@ -232,9 +232,14 @@
 										</div>
 									</a>
 								</div>
-								
-								<!-- Context Menu positioned in bottom-right -->
-								<div class="absolute bottom-4 right-4">
+
+								<!-- Card Footer: language badge (left) and context menu (right) -->
+								<div class="px-8 pb-4 pt-0 flex items-center justify-between">
+									{#if document.language_code}
+										<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-200 text-gray-700 uppercase tracking-wide">
+											{document.language_code}
+										</span>
+									{/if}
 									<LessonContextMenu 
 										lesson={document}
 										bind:isOpen={lessonMenuStates[document.id]}

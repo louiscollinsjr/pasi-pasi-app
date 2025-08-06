@@ -14,33 +14,65 @@ export function getPronunciationRules(nativeLang: string = 'en'): PronunciationR
 export function findPronunciationMatches(word: string, rules: PronunciationRule[]): PronunciationMatch[] {
   const matches: PronunciationMatch[] = [];
   const lowerWord = word.toLowerCase();
-  
-  const sortedRules = [...rules].sort((a, b) => b.pattern.length - a.pattern.length);
+
+  // Prefer longer literal sequences first (e.g., 'eu', 'ei') over regex (e.g., /^e/)
+  const weight = (rule: PronunciationRule): number => {
+    if (typeof rule.pattern === 'string') {
+      // Multi-letter literals highest, then single-letter literals
+      return rule.pattern.length >= 2 ? 3000 + rule.pattern.length : 1000 + rule.pattern.length;
+    }
+    const src = rule.pattern.source || '';
+    const anchored = src.startsWith('^');
+    // Anchored regex (e.g., ^e) should beat single-letter literals, but lose to multi-letter literals
+    return anchored ? 2000 + src.length : 500 + src.length;
+  };
+  const sortedRules = [...rules].sort((a, b) => weight(b) - weight(a));
 
   let i = 0;
   while (i < lowerWord.length) {
     let matched = false;
     for (const rule of sortedRules) {
-      if (lowerWord.startsWith(String(rule.pattern), i)) {
-        const patternStr = String(rule.pattern);
-        matches.push({
-          text: word.substring(i, i + patternStr.length),
-          pronunciation: rule.phoneme,
-          explanation: rule.explanation,
-          startIndex: i,
-          endIndex: i + patternStr.length - 1
-        });
-        i += patternStr.length;
-        matched = true;
-        break;
+      if (typeof rule.pattern === 'string') {
+        const patt = rule.pattern.toLowerCase();
+        if (lowerWord.startsWith(patt, i)) {
+          matches.push({
+            text: word.substring(i, i + patt.length),
+            pronunciation: rule.phoneme,
+            explanation: rule.explanation,
+            startIndex: i,
+            endIndex: i + patt.length - 1
+          });
+          i += patt.length;
+          matched = true;
+          break;
+        }
+      } else {
+        const substr = lowerWord.slice(i);
+        // Ensure regex is tested from beginning of substring
+        const re = rule.pattern;
+        if (re.global) re.lastIndex = 0; // reset if global
+        const m = substr.match(re);
+        if (m && m.index === 0) {
+          const len = m[0].length;
+          matches.push({
+            text: word.substring(i, i + len),
+            pronunciation: rule.phoneme,
+            explanation: rule.explanation,
+            startIndex: i,
+            endIndex: i + len - 1
+          });
+          i += len;
+          matched = true;
+          break;
+        }
       }
     }
-    
+
     if (!matched) {
       i++;
     }
   }
-  
+
   return matches;
 }
 

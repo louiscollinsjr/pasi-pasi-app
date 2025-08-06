@@ -58,7 +58,7 @@
   <button
     bind:this={buttonElement}
     on:click|stopPropagation={toggleMenu}
-    class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+    class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
     aria-label="More options"
   >
     <MoreHorizontal size={16} />

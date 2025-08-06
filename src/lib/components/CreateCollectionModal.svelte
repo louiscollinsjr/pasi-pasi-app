@@ -21,9 +21,18 @@
 		error = '';
 
 		try {
+			// Ensure we have the authenticated user for RLS (auth.uid() = user_id)
+			const { data: userData, error: userError } = await supabase.auth.getUser();
+			if (userError || !userData?.user) {
+				error = 'You must be logged in to create a collection.';
+				return;
+			}
+
+			const { user } = userData;
+
 			const { data, error: insertError } = await supabase
 				.from('collections')
-				.insert([{ title: collectionName.trim() }])
+				.insert([{ title: collectionName.trim(), user_id: user.id }])
 				.select()
 				.single();
 

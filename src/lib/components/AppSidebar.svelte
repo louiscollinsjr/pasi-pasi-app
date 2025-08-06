@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { X } from 'phosphor-svelte';
+  import { X, Gear } from 'phosphor-svelte';
   import Button from '$lib/components/ui/button/button.svelte';
   import { user as userStore } from '$lib/stores/userStore';
   import { supabase } from '$lib/supabaseClient';
@@ -38,6 +38,7 @@
     event.preventDefault();
     if (label === 'New lesson') goto('/parser');
     else if (label === 'Library') goto('/library');
+    else if (label === 'Settings') goto('/settings');
 
     // Close sidebar on mobile after navigation
     if (window.innerWidth < 768) {
@@ -71,7 +72,7 @@
     </div>
 
     <!-- Navigation content -->
-    <nav class="flex-1 px-4 sm:px-8 py-6 space-y-6 sm:pt-20">
+    <nav class="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-6 sm:pt-20">
       <!-- Main menu items -->
       <div class="space-y-2">
         {#each menu as item}
@@ -79,12 +80,22 @@
             href="#" 
             class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors text-left"
             on:click={(e) => handleMenuClick(e, item.label)}
-            class:bg-gray-100={($page.url.pathname.startsWith('/parser') && item.label === 'New lesson') || ($page.url.pathname.startsWith('/library') && item.label === 'Library')}
+            class:bg-gray-100={(($page.url.pathname.startsWith('/parser') && item.label === 'New lesson') || ($page.url.pathname.startsWith('/library') && item.label === 'Library'))}
           >
             <svelte:component this={item.icon} size={18} class="text-gray-500" />
             {item.label}
           </a>
         {/each}
+        <!-- Settings link -->
+        <a 
+          href="#"
+          class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors text-left"
+          on:click={(e) => handleMenuClick(e, 'Settings')}
+          class:bg-gray-100={$page.url.pathname.startsWith('/settings')}
+        >
+          <Gear size={18} class="text-gray-500" />
+          Settings
+        </a>
       </div>
 
       <!-- Lessons section -->

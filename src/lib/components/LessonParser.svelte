@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import { supabase } from '$lib/supabaseClient';
   import { parseLesson, type ParsedLesson, reconstructLesson } from '$lib/utils/parseLesson';
   import Button from '$lib/components/ui/button/button.svelte';
   import * as Card from '$lib/components/ui/card/index';
   import { Textarea } from '$lib/components/ui/textarea/index';
+  import { userProfile } from '$lib/stores/userProfileStore';
 
   export let collectionId: number | null = null;
   const dispatch = createEventDispatcher();
@@ -12,6 +13,15 @@
   let inputText = '';
   let parsedLesson: ParsedLesson | null = null;
   let isProcessing = false;
+
+  // Native language from user profile (defaults to 'en')
+  let nativeLanguage: 'en' | 'fr' = 'en';
+  $: nativeLanguage = ($userProfile.profile?.native_language ?? 'en') as 'en' | 'fr';
+
+  onMount(async () => {
+    // Ensure we have the latest profile loaded
+    await userProfile.fetchProfile();
+  });
 
   function getLeadingSpaces(line: string): number {
     return (line.match(/^\s*/) || [''])[0].length;
@@ -29,9 +39,8 @@ Cultura română este bogată și diversă. Românii sunt cunoscuți pentru ospi
   import { getPronunciationRules, findPronunciationMatches } from '$lib/pronunciation';
 
   function enrichParsedLesson(parsedLesson: ParsedLesson) {
-    // Defaulting to 'en' for now. This can be dynamic later.
-    const nativeLang = 'en';
-    const rules = getPronunciationRules(nativeLang);
+    // Use the user's selected native language to drive pronunciation rules
+    const rules = getPronunciationRules(nativeLanguage);
 
     for (const paragraph of parsedLesson.paragraphs) {
       for (const sentence of paragraph.sentences) {
@@ -50,6 +59,51 @@ Cultura română este bogată și diversă. Românii sunt cunoscuți pentru ospi
       }
     }
     return parsedLesson;
+  }
+
+  // Source language selection for the pasted text
+  const sourceLanguages = [
+    { code: 'ro', label: 'Romanian' },
+    { code: 'es', label: 'Spanish' },
+    { code: 'fr', label: 'French' },
+    { code: 'en', label: 'English' },
+    { code: 'rom', label: 'Romani' }
+  ];
+  let sourceLanguageCode: string = 'ro';
+
+  function detectByHeuristics(text: string): string {
+    // Very lightweight heuristic-based language guess as a placeholder for AI detection
+    const lower = text.toLowerCase();
+    const score: Record<string, number> = { ro: 0, es: 0, fr: 0, en: 0 };
+    // Romanian diacritics
+    if (/[ăâîșţțș]/i.test(text)) score.ro += 3;
+    if (/(ă|â|î|ș|ţ|ț|ş)/i.test(text)) score.ro += 2;
+    // Spanish markers
+    if (/[ñáéíóúü¡¿]/i.test(text)) score.es += 3;
+    if (/\b(el|la|de|que|y|en|los|se|del)\b/.test(lower)) score.es += 1;
+    // French markers
+    if (/[éèêëàùûüîïçœ]/i.test(text)) score.fr += 3;
+    if (/\b(le|la|les|de|des|et|est|pour|avec)\b/.test(lower)) score.fr += 1;
+    // English markers
+    if (/\b(the|and|of|to|in|that|it|is|was|for)\b/.test(lower)) score.en += 2;
+    // Pick highest score; default to Romanian
+    let best = 'ro';
+    let bestScore = -1;
+    for (const [k, v] of Object.entries(score)) {
+      if (v > bestScore) {
+        best = k;
+        bestScore = v;
+      }
+    }
+    return best;
+  }
+
+  async function handlePaste(e: ClipboardEvent) {
+    const pasted = e.clipboardData?.getData('text') ?? '';
+    if (pasted.trim().length < 10) return; // avoid short snippets
+    // TODO: replace with AI language detection (e.g., Edge Function or external API)
+    const guess = detectByHeuristics(pasted);
+    sourceLanguageCode = guess;
   }
 
   function handleProcess() {
@@ -92,7 +146,8 @@ Cultura română este bogată și diversă. Românii sunt cunoscuți pentru ospi
       user_id: user.id,
       title: parsedLesson.title,
       content: parsedLesson, // The full parsed object for the JSONB column
-      original_text: inputText
+      original_text: inputText,
+      language_code: sourceLanguageCode
     };
 
     const { data, error } = await supabase
@@ -127,12 +182,26 @@ Cultura română este bogată și diversă. Românii sunt cunoscuți pentru ospi
     </Card.Header>
     <Card.Content class="space-y-4">
       <div class="space-y-2">
+        <label for="source-language" class="text-sm font-medium">Source Language</label>
+        <select
+          id="source-language"
+          class="w-full p-2 border rounded"
+          bind:value={sourceLanguageCode}
+        >
+          {#each sourceLanguages as lang}
+            <option value={lang.code}>{lang.label}</option>
+          {/each}
+        </select>
+        <p class="text-xs text-muted-foreground">We’ll try to auto-detect the language when you paste text. You can always override this.</p>
+      </div>
+      <div class="space-y-2">
         <label for="lesson-input" class="text-sm font-medium">Lesson Text</label>
         <Textarea
           id="lesson-input"
           bind:value={inputText}
           placeholder="Paste your Romanian lesson text here..."
           class="min-h-[200px] resize-y"
+          on:paste={handlePaste}
         />
       </div>
       

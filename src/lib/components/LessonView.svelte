@@ -319,6 +319,12 @@
 		<div class="flex items-center justify-between">
 			<h1 class="font-medium break-words text-gray-900 transition-all duration-300 ease-in-out {isHeaderSticky ? 'text-lg' : 'text-2xl'}">
 				{lesson.title}
+				<!-- Language badge -->
+				{#if lesson.language_code}
+					<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-200 text-gray-700 uppercase tracking-wide">
+						{lesson.language_code}
+					</span>
+				{/if}
 			</h1>
 
 			<!-- Lesson Metrics - show compact version when sticky -->

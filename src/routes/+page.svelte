@@ -2,6 +2,11 @@
   import HomepageGallery from '$lib/components/HomepageGallery.svelte';
   import { ArrowDown } from 'lucide-svelte';
   import { onMount } from 'svelte';
+
+//   import { getPronunciationRules, findPronunciationMatches } from '$lib/pronunciation';
+
+// const rules = getPronunciationRules('fr');
+// console.log(findPronunciationMatches('mâncare', rules));
   
   let scrollY = 0;
   let scrollIndicatorOpacity = 1;

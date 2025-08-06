@@ -3,7 +3,7 @@
 	import { Input } from '$lib/components/ui/input/index';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import FloatingToolbar from '$lib/components/FloatingToolbar.svelte';
-	import { findPronunciationMatches } from '$lib/data/pronunciationGuide.js';
+	import { getPronunciationRules, findPronunciationMatches } from '$lib/pronunciation';
 	import { VocabularyService } from '$lib/services/vocabularyService';
 	import type { VocabularyWord, WordTranslation } from '$lib/services/vocabularyService';
 	import { ArrowLeft, BarChart3, Text, Eye, EyeOff, Focus, Speech } from 'lucide-svelte';
@@ -26,6 +26,10 @@
 	let readingMode = true; // true = reading mode (paragraphs), false = focus mode (sentence-per-line)
 	let localVocabulary = vocabulary; // Global known words only
 	const documentTranslationsStore = writable(documentTranslations);
+
+	// Default native language for pronunciation; make dynamic later
+	const nativeLang = 'en';
+	const rules = getPronunciationRules(nativeLang);
 
 	// Sticky header state
 	let isHeaderSticky = false;
@@ -246,7 +250,7 @@
 			return word; // Return plain word if guide is disabled
 		}
 
-		const matches = findPronunciationMatches(word);
+		const matches = findPronunciationMatches(word, rules);
 		if (matches.length === 0) {
 			return word; // No pronunciation matches found
 		}

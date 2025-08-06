@@ -2,7 +2,7 @@
   import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover/index';
   import { Input } from '$lib/components/ui/input/index';
   import Button from '$lib/components/ui/button/button.svelte';
-  import { findPronunciationMatches } from '$lib/data/pronunciationGuide.js';
+  import { getPronunciationRules, findPronunciationMatches } from '$lib/pronunciation';
 
   export let paragraphs = [];
   export let readingMode = true;
@@ -17,6 +17,10 @@
   export let hasTranslationForWord;
   export let getWordVocabulary;
   export let getTranslationForWord;
+
+  // Defaulting to English ('en'); make dynamic later if needed
+  const nativeLang = 'en';
+  const rules = getPronunciationRules(nativeLang);
 </script>
 
 <div>
@@ -38,7 +42,7 @@
                   {#if showPronunciationGuide}
                     <!-- Pronunciation guide rendering logic: -->
                     <!-- 1. Get pronunciation matches for the current word -->
-                    {@const matches = word.pronunciationMatches ?? findPronunciationMatches(word)}
+                    {@const matches = word.pronunciationMatches ?? findPronunciationMatches(word, rules)}
                     
                     {#if matches.length > 0}
                         <!-- Container for pronunciation guide elements -->
@@ -152,7 +156,7 @@
                   >
                     <!-- Pronunciation guide rendering -->
                     {#if showPronunciationGuide}
-                      {@const matches = word.pronunciationMatches ?? findPronunciationMatches(word)}
+                      {@const matches = word.pronunciationMatches ?? findPronunciationMatches(word, rules)}
                       {#if matches.length > 0}
                         <div class="inline-flex flex-col items-start">
                           <div class="flex">

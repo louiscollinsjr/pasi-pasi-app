@@ -8,7 +8,7 @@ const exceptionRegex = new RegExp(`\\be(?!(${exceptions.join('|')})\\b)`);
 export const ro_en_rules: PronunciationRule[] = [
   // Vowel combinations first
   { pattern: 'ai', phoneme: 'eye', explanation: "like 'eye'" },
-  { pattern: 'ei', phoneme: 'ay', explanation: "like 'say'" },
+  { pattern: 'ei', phoneme: 'yay', explanation: "like 'say'" },
   { pattern: 'oi', phoneme: 'oy', explanation: "like 'boy'" },
   { pattern: 'ui', phoneme: 'wee', explanation: "like 'week', but faster" }, // 'oo-ee' feels clunky
   { pattern: 'au', phoneme: 'ow', explanation: "like 'cow'" },

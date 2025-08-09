@@ -138,8 +138,10 @@
 
 	// Helper function to normalize word for lookup
 	function normalizeWord(word: string): string {
-		return word.toLowerCase().replace(/[.,!?;:"'()]/g, '');
-	}
+    // Strip all Unicode punctuation and symbols to ensure consistent normalization
+    // Examples removed: , . ! ? : ; quotes, parentheses, dashes, quotes like „ ”, etc.
+    return word.toLowerCase().replace(/[\p{P}\p{S}]/gu, '');
+  }
 
 	// Get vocabulary entry for a word (only returns if globally known)
 	function getWordVocabulary(word: string): VocabularyWord | null {
@@ -168,11 +170,18 @@
 
 	// Update document translation as user types (optionally persisting occurrence id)
 	async function updateDocumentTranslation(word: string, translation: string, occurrenceId?: string) {
-    console.log('[updateDocumentTranslation] saving', { word, translation });
+    const useOccurrenceId = occurrenceId || editingWord || undefined;
+    console.log('[updateDocumentTranslation] saving', {
+      word,
+      translation,
+      occurrenceId,
+      editingWord,
+      useOccurrenceId
+    });
     const normalized = normalizeWord(word);
 
     if (translation.trim()) {
-      console.log('[updateDocumentTranslation] saving', { word, normalized, translation });
+      console.log('[updateDocumentTranslation] saving', { word, normalized, translation, occurrenceId });
       const newTranslation = {
         id: '',
         original_word: word,
@@ -186,7 +195,7 @@
 
       documentTranslationsStore.update((translations) => {
         const prev = translations[normalized] as WordTranslation | undefined;
-        const mergedOccurrenceIds = Array.from(new Set([...(prev?.occurrence_ids || []), ...(occurrenceId ? [occurrenceId] : [])]));
+        const mergedOccurrenceIds = Array.from(new Set([...(prev?.occurrence_ids || []), ...(useOccurrenceId ? [useOccurrenceId] : [])]));
         return {
           ...translations,
           [normalized]: { ...newTranslation, occurrence_ids: mergedOccurrenceIds }
@@ -199,9 +208,9 @@
         normalized,
         translation.trim(),
         'ro',
-        occurrenceId
+        useOccurrenceId
       );
-      console.log('[updateDocumentTranslation] saved + store updated');
+      console.log('[updateDocumentTranslation] saved + store updated with occurrence', useOccurrenceId);
     } else {
       console.log('[updateDocumentTranslation] clearing translation', { word, normalized });
       documentTranslationsStore.update((translations) => {
@@ -234,24 +243,18 @@
   }
 
 	// Save document translation only (doesn't mark as known)
-	async function saveDocumentTranslationOnly(word: string) {
-    console.log('[saveDocumentTranslationOnly] invoked', { word, translationInput });
-    if (!translationInput.trim()) {
-      console.log('[saveDocumentTranslationOnly] abort: empty translationInput');
+	async function saveDocumentTranslationOnly(word: string, occurrenceId: string) {
+    console.log('[saveDocumentTranslationOnly] invoked', { word, occurrenceId });
+    
+    if (!occurrenceId) {
+      console.error('OccurrenceId is undefined!');
       return;
     }
-
-    const currentId = editingWord; // capture the current occurrence id
-    await updateDocumentTranslation(word, translationInput.trim(), currentId || undefined);
-    console.log('[saveDocumentTranslationOnly] clearing input & closing popover');
-    if (currentId) {
-      const next = new Set(tempShownTranslations);
-      next.add(currentId);
-      tempShownTranslations = next; // reassign to trigger reactivity
-      console.log('[saveDocumentTranslationOnly] showing inline for occurrence', currentId);
-    }
+    
+    await updateDocumentTranslation(word, translationInput, occurrenceId);
     translationInput = '';
     editingWord = null;
+    console.log('[saveDocumentTranslationOnly] clearing input & closing popover');
   }
 
 	async function deleteTranslation(word: string) {

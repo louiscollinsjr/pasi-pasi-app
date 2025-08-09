@@ -108,16 +108,19 @@
                 <PopoverContent>
                   <div class="flex flex-col gap-2">
                     <Button type="button" on:click={() => markKnown(word)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
-                    <form on:submit|preventDefault={() => saveDocumentTranslationOnly(word)}>
+                    <form on:submit|preventDefault={() => saveDocumentTranslationOnly(word, `${paragraph.id}-${lIdx}-${wIdx}`)}>
                       <Input
                         placeholder="Add translation"
                         bind:value={translationInput}
-                        on:input={() => updateDocumentTranslation(word, translationInput)}
+                        on:input={() => updateDocumentTranslation(word, translationInput, `${paragraph.id}-${lIdx}-${wIdx}`)}
                         class="mb-2 text-xl"
                         autofocus
                       />
                       <div class="flex gap-2">
-                        <Button type="button" on:click={() => saveDocumentTranslationOnly(word)} variant="default" class="flex-1 text-xl font-bold">Update</Button>
+                        <Button type="button" on:click={() => {
+                          console.log('Reading mode occurrenceId:', `${paragraph.id}-${lIdx}-${wIdx}`);
+                          saveDocumentTranslationOnly(word, `${paragraph.id}-${lIdx}-${wIdx}`);
+                        }} variant="default" class="flex-1 text-xl font-bold">Update</Button>
                         {#if hasTranslationForWord(word)}
                           <Button type="button" on:click={() => deleteTranslation(word)} variant="destructive" class="text-xl font-bold">Delete</Button>
                         {/if}
@@ -209,16 +212,19 @@
                       <Button type="button" on:click={() => markKnown(word)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
                       
                       <!-- Form for adding/updating translation -->
-                      <form on:submit|preventDefault={() => saveDocumentTranslationOnly(word)}>
+                      <form on:submit|preventDefault={() => saveDocumentTranslationOnly(word, `${paragraph.id}-s${sIdx}-${wIdx}`)}>
                         <Input
                           placeholder="Add translation"
                           bind:value={translationInput}
-                          on:input={() => updateDocumentTranslation(word, translationInput)}
+                          on:input={() => updateDocumentTranslation(word, translationInput, `${paragraph.id}-s${sIdx}-${wIdx}`)}
                           class="mb-2 text-xl"
                           autofocus
                         />
                         <div class="flex gap-2">
-                          <Button type="button" on:click={() => saveDocumentTranslationOnly(word)} variant="default" class="flex-1 text-xl font-bold">Update</Button>
+                          <Button type="button" on:click={() => {
+                            console.log('Non-reading mode occurrenceId:', `${paragraph.id}-s${sIdx}-${wIdx}`);
+                            saveDocumentTranslationOnly(word, `${paragraph.id}-s${sIdx}-${wIdx}`);
+                          }} variant="default" class="flex-1 text-xl font-bold">Update</Button>
                           {#if hasTranslationForWord(word)}
                             <Button type="button" on:click={() => deleteTranslation(word)} variant="destructive" class="text-xl font-bold">Delete</Button>
                           {/if}

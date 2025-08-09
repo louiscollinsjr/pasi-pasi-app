@@ -73,8 +73,9 @@ export class VocabularyService {
     if (words.length === 0) return {};
     
     // Normalize words for lookup
-    const normalizedWords = words.map(word => 
-      word.toLowerCase().replace(/[.,!?;:"'()]/g, ''));
+    const normalizedWords = words.map((word) =>
+      word.toLowerCase().replace(/[\p{P}\p{S}]/gu, '')
+    );
     
     const { data, error } = await supabase
       .from('word_translations')
@@ -205,17 +206,27 @@ export class VocabularyService {
     if (contextLeft !== undefined) payload.context_left = contextLeft;
     if (contextRight !== undefined) payload.context_right = contextRight;
 
-    const { error } = await supabase
+    console.log('[VocabularyService.saveDocumentTranslation] upsert payload', {
+      normalizedWord,
+      occurrenceId,
+      mergedOccurrenceIds,
+      hasExisting: !!existing,
+    });
+
+    const { data: upserted, error } = await supabase
       .from('word_translations')
       .upsert(payload, {
         onConflict: 'user_id,document_id,normalized_word,language_code'
-      });
+      })
+      .select('id, occurrence_ids')
+      .limit(1);
 
     if (error) {
       console.error('Error saving document translation:', error);
       return false;
     }
 
+    console.log('[VocabularyService.saveDocumentTranslation] upsert success', upserted);
     return true;
   }
 
@@ -293,8 +304,8 @@ export class VocabularyService {
       paragraph.sentences?.forEach((sentence: any) => {
         sentence.words?.forEach((word: any) => {
           if (word.rom && word.rom.trim()) {
-            // Normalize word (remove punctuation, lowercase)
-            const normalizedWord = word.rom.toLowerCase().replace(/[.,!?;:"'()]/g, '');
+            // Normalize word (remove all Unicode punctuation/symbols, lowercase)
+            const normalizedWord = word.rom.toLowerCase().replace(/[\p{P}\p{S}]/gu, '');
             if (normalizedWord) {
               words.add(normalizedWord);
             }

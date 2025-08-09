@@ -2,7 +2,7 @@ import type { PronunciationRule } from './types';
 
 // Exceptions to initial 'e' -> 'ye' (names/foreign origins)
 const exceptions = ['eva', 'elena', 'emanuel', 'erasmus', 'europa'];
-const exceptionRegex = new RegExp(`^e(?!(${exceptions.join('|')})\\b)`);
+const exceptionRegex = new RegExp(`\\be(?!(${exceptions.join('|')})\\b)`);
 
 // Pronunciation rules for native English speakers learning Romanian.
 export const ro_en_rules: PronunciationRule[] = [

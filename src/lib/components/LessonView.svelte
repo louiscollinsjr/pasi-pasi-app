@@ -28,6 +28,19 @@
 	let readingMode = true; // true = reading mode (paragraphs), false = focus mode (sentence-per-line)
 	let localVocabulary = vocabulary; // Global known words only
 	const documentTranslationsStore = writable(documentTranslations);
+	// Track which specific occurrences should show a just-added document translation
+	let tempShownTranslations: Set<string> = new Set();
+
+	// Merge persisted occurrence_ids from the store into tempShownTranslations (keeps optimistic IDs too)
+	$: {
+		const ids = new Set<string>();
+		const dt = $documentTranslationsStore as Record<string, WordTranslation>;
+		Object.values(dt || {}).forEach((t) => {
+			(t?.occurrence_ids || []).forEach((id) => ids.add(id));
+		});
+		// union to preserve optimistic entries until DB roundtrip completes
+		tempShownTranslations = new Set<string>([...tempShownTranslations, ...ids]);
+	}
 
 	// Target and native language for pronunciation guide
 	let targetLang: string = lesson?.language_code || 'ro';
@@ -153,41 +166,50 @@
 		return !!$documentTranslationsStore[normalized];
 	};
 
-	// Update document translation as user types
-	async function updateDocumentTranslation(word: string, translation: string) {
-		const normalized = normalizeWord(word);
+	// Update document translation as user types (optionally persisting occurrence id)
+	async function updateDocumentTranslation(word: string, translation: string, occurrenceId?: string) {
+    console.log('[updateDocumentTranslation] saving', { word, translation });
+    const normalized = normalizeWord(word);
 
-		if (translation.trim()) {
-			const newTranslation = {
-				id: '',
-				original_word: word,
-				normalized_word: normalized,
-				translation: translation.trim(),
+    if (translation.trim()) {
+      console.log('[updateDocumentTranslation] saving', { word, normalized, translation });
+      const newTranslation = {
+        id: '',
+        original_word: word,
+        normalized_word: normalized,
+        translation: translation.trim(),
 				language_code: 'ro',
 				status: 'confirmed',
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString()
 			};
 
-			documentTranslationsStore.update((translations) => ({
-				...translations,
-				[normalized]: newTranslation
-			}));
+      documentTranslationsStore.update((translations) => {
+        const prev = translations[normalized] as WordTranslation | undefined;
+        const mergedOccurrenceIds = Array.from(new Set([...(prev?.occurrence_ids || []), ...(occurrenceId ? [occurrenceId] : [])]));
+        return {
+          ...translations,
+          [normalized]: { ...newTranslation, occurrence_ids: mergedOccurrenceIds }
+        };
+      });
 
-			await VocabularyService.saveDocumentTranslation(
-				lessonId,
-				word,
-				normalized,
-				translation.trim(),
-				'ro'
-			);
-		} else {
-			documentTranslationsStore.update((translations) => {
-				const { [normalized]: _, ...rest } = translations;
-				return rest;
-			});
-		}
-	}
+      await VocabularyService.saveDocumentTranslation(
+        lessonId,
+        word,
+        normalized,
+        translation.trim(),
+        'ro',
+        occurrenceId
+      );
+      console.log('[updateDocumentTranslation] saved + store updated');
+    } else {
+      console.log('[updateDocumentTranslation] clearing translation', { word, normalized });
+      documentTranslationsStore.update((translations) => {
+        const { [normalized]: _, ...rest } = translations;
+        return rest;
+      });
+    }
+  }
 
 	function hasDocumentTranslation(word: string): boolean {
 		const normalized = normalizeWord(word);
@@ -195,42 +217,83 @@
 	}
 
 	async function handleWordClick(wordId: string, word: string) {
-		editingWord = null;
-		await tick(); // Wait for DOM update
-		editingWord = wordId;
+    console.log('[handleWordClick] open popover for', { wordId, word });
+    editingWord = null;
+    await tick(); // Wait for DOM update
+    editingWord = wordId;
 
 		// For known words, show the saved translation
 		// For unknown words, show any document translation they've entered
 		const vocab = getWordVocabulary(word);
-		if (vocab?.known) {
-			translationInput = vocab.eng_translation || '';
-		} else {
-			translationInput = getDocumentTranslation(word);
-		}
-	}
+    if (vocab?.known) {
+      translationInput = vocab.eng_translation || '';
+    } else {
+      translationInput = getDocumentTranslation(word);
+    }
+    console.log('[handleWordClick] initial translationInput', translationInput);
+  }
 
 	// Save document translation only (doesn't mark as known)
 	async function saveDocumentTranslationOnly(word: string) {
-		if (!translationInput.trim()) return;
+    console.log('[saveDocumentTranslationOnly] invoked', { word, translationInput });
+    if (!translationInput.trim()) {
+      console.log('[saveDocumentTranslationOnly] abort: empty translationInput');
+      return;
+    }
 
-		await updateDocumentTranslation(word, translationInput.trim());
-		translationInput = '';
-		editingWord = null;
-	}
+    const currentId = editingWord; // capture the current occurrence id
+    await updateDocumentTranslation(word, translationInput.trim(), currentId || undefined);
+    console.log('[saveDocumentTranslationOnly] clearing input & closing popover');
+    if (currentId) {
+      const next = new Set(tempShownTranslations);
+      next.add(currentId);
+      tempShownTranslations = next; // reassign to trigger reactivity
+      console.log('[saveDocumentTranslationOnly] showing inline for occurrence', currentId);
+    }
+    translationInput = '';
+    editingWord = null;
+  }
 
 	async function deleteTranslation(word: string) {
-		await updateDocumentTranslation(word, '');
-		translationInput = '';
-		editingWord = null;
-	}
+    console.log('[deleteTranslation] invoked', { word });
+    const normalized = normalizeWord(word);
+    if (editingWord) {
+      // Remove only this occurrence from persistence
+      await VocabularyService.removeOccurrenceFromDocumentTranslation(lessonId, normalized, editingWord);
+      // Update local store to reflect removal
+      documentTranslationsStore.update((translations) => {
+        const t = translations[normalized] as WordTranslation | undefined;
+        if (!t) return translations;
+        const nextIds = (t.occurrence_ids || []).filter((id) => id !== editingWord);
+        return { ...translations, [normalized]: { ...t, occurrence_ids: nextIds } };
+      });
+    } else {
+      // If no specific occurrence, delete the entire document translation row
+      await VocabularyService.deleteDocumentTranslation(lessonId, normalized);
+      documentTranslationsStore.update((translations) => {
+        const { [normalized]: _, ...rest } = translations;
+        return rest;
+      });
+    }
+    translationInput = '';
+    // Remove temporary inline display for the current occurrence (if any)
+    if (editingWord) {
+      const next = new Set(tempShownTranslations);
+      next.delete(editingWord);
+      tempShownTranslations = next;
+      console.log('[deleteTranslation] removed temp inline for', editingWord);
+    }
+    editingWord = null;
+  }
 
 	async function saveTranslation(word: string) {
-		const normalized = normalizeWord(word);
+    console.log('[saveTranslation] invoked', { word, translationInput });
+    const normalized = normalizeWord(word);
 
-		if (!translationInput.trim()) {
-			alert('Please enter a translation before marking as known.');
-			return;
-		}
+    if (!translationInput.trim()) {
+      alert('Please enter a translation before marking as known.');
+      return;
+    }
 
 		// Optimistic update - mark as globally known
 		localVocabulary[normalized] = {
@@ -258,18 +321,22 @@
 			translationInput.trim()
 		);
 
-		if (!success) {
-			// Revert optimistic update on failure
-			localVocabulary = { ...vocabulary };
-			alert('Failed to save translation');
-		}
+    if (!success) {
+      // Revert optimistic update on failure
+      localVocabulary = { ...vocabulary };
+      alert('Failed to save translation');
+    }
 
-		editingWord = null;
-		translationInput = '';
-	}
+    editingWord = null;
+    translationInput = '';
+    console.log('[saveTranslation] completed, input cleared');
+    // Once known, no need to keep a temp occurrence-specific display
+    tempShownTranslations = new Set();
+  }
 
 	async function markKnown(word: string) {
-		const normalized = normalizeWord(word);
+    console.log('[markKnown] invoked', { word });
+    const normalized = normalizeWord(word);
 
 		// Check if there's a document translation to use
 		const documentTranslation = getDocumentTranslation(word);
@@ -428,7 +495,7 @@
       {readingMode}
       {showPronunciationGuide}
       {editingWord}
-      {translationInput}
+      bind:translationInput={translationInput}
       handleWordClick={handleWordClick}
       markKnown={markKnown}
       saveDocumentTranslationOnly={saveDocumentTranslationOnly}
@@ -439,6 +506,7 @@
       getTranslationForWord={getTranslationForWord}
       targetLang={targetLang}
       nativeLang={selectedNativeLang}
+      tempShownIds={[...tempShownTranslations]}
     />
   </div>
 </div>

@@ -71,6 +71,26 @@
       </button> -->
     </div>
 
+    <!-- Mobile login/logout section at top -->
+    <div class="md:hidden pt-6 pb-4 px-4">
+      {#if $userStore}
+        <div class="space-y-3">
+          <div class="text-sm text-gray-600">
+            Signed in as <span class="font-medium">{$userStore.email}</span>
+          </div>
+          <Button on:click={logout} variant="outline" size="sm" class="w-3/4 mx-auto">
+            Log out
+          </Button>
+        </div>
+      {:else}
+        <a href="/login" 
+           class="block w-3/4 mx-auto text-center text-base rounded-full font-medium bg-gray-100 text-black px-6 py-3 focus:outline-none focus:ring-2 focus:ring-primary transition-colors hover:bg-gray-200"
+           on:click={closeSidebar}>
+          Log in
+        </a>
+      {/if}
+    </div>
+
     <!-- Navigation content -->
     <nav class="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-6 sm:pt-20">
       <!-- Main menu items -->
@@ -176,25 +196,5 @@
         </div>
       {/if}
     </nav>
-
-    <!-- Mobile login/logout section at bottom -->
-    <div class="md:hidden mt-auto pt-6 pb-8">
-      {#if $userStore}
-        <div class="space-y-3">
-          <div class="text-sm text-gray-600">
-            Signed in as <span class="font-medium">{$userStore.email}</span>
-          </div>
-          <Button on:click={logout} variant="outline" size="sm" class="w-3/4 mx-auto">
-            Log out
-          </Button>
-        </div>
-      {:else}
-        <a href="/login" 
-           class="block w-3/4 mx-auto text-center text-base rounded-full font-medium bg-gray-100 text-black px-6 py-3 focus:outline-none focus:ring-2 focus:ring-primary transition-colors hover:bg-gray-200"
-           on:click={closeSidebar}>
-          Log in
-        </a>
-      {/if}
-    </div>
   </div>
 </aside>

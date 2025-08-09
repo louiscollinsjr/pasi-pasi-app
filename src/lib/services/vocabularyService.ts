@@ -1,5 +1,4 @@
 import { supabase } from '$lib/supabaseClient';
-import type { VocabularyWord, WordTranslation } from '$lib/types';
 
 export interface VocabularyWord {
   id: string;
@@ -14,11 +13,14 @@ export interface WordTranslation {
   id: string;
   original_word: string;
   normalized_word: string;
-  document_specific_translation: string;
+  translation: string;
   language_code: string;
   status: string;
   created_at: string;
   updated_at: string;
+  occurrence_ids?: string[] | null;
+  context_left?: string | null;
+  context_right?: string | null;
 }
 
 export class VocabularyService {
@@ -87,8 +89,8 @@ export class VocabularyService {
 
     // Create lookup by normalized word
     const translations: Record<string, WordTranslation> = {};
-    data.forEach(translation => {
-      translations[translation.normalized_word] = translation;
+    data.forEach((translation: any) => {
+      translations[translation.normalized_word] = translation as WordTranslation;
     });
 
     return translations;
@@ -126,8 +128,32 @@ export class VocabularyService {
       .delete()
       .eq('user_id', user.id)
       .eq('document_id', documentId)
-      .eq('romanian_word', romanianWord);
+      .eq('normalized_word', romanianWord);
 
+    return true;
+  }
+
+  /** Delete an entire document-specific translation row for a word */
+  static async deleteDocumentTranslation(
+    documentId: string,
+    normalizedWord: string,
+    languageCode: string = 'ro'
+  ): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from('word_translations')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('document_id', documentId)
+      .eq('normalized_word', normalizedWord)
+      .eq('language_code', languageCode);
+
+    if (error) {
+      console.error('Error deleting document translation:', error);
+      return false;
+    }
     return true;
   }
 
@@ -139,27 +165,95 @@ export class VocabularyService {
     originalWord: string,
     normalizedWord: string,
     translation: string,
-    languageCode: string = 'ro'
+    languageCode: string = 'ro',
+    occurrenceId?: string,
+    contextLeft?: string,
+    contextRight?: string
   ): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !translation?.trim()) return false;
 
+    // Fetch existing row to merge occurrence_ids
+    const { data: existingRows, error: fetchError } = await supabase
+      .from('word_translations')
+      .select('id, occurrence_ids')
+      .eq('user_id', user.id)
+      .eq('document_id', documentId)
+      .eq('normalized_word', normalizedWord)
+      .eq('language_code', languageCode)
+      .limit(1);
+
+    if (fetchError) {
+      console.error('Error reading existing translation:', fetchError);
+    }
+
+    const existing = existingRows?.[0] as { id?: string; occurrence_ids?: string[] } | undefined;
+    const mergedOccurrenceIds = Array.from(
+      new Set([...(existing?.occurrence_ids ?? []), ...(occurrenceId ? [occurrenceId] : [])])
+    );
+
+    const payload: any = {
+      user_id: user.id,
+      document_id: documentId,
+      original_word: originalWord,
+      normalized_word: normalizedWord,
+      translation: translation.trim(),
+      language_code: languageCode,
+      status: 'confirmed',
+      occurrence_ids: mergedOccurrenceIds,
+    };
+    if (contextLeft !== undefined) payload.context_left = contextLeft;
+    if (contextRight !== undefined) payload.context_right = contextRight;
+
     const { error } = await supabase
       .from('word_translations')
-      .upsert({
-        user_id: user.id,
-        document_id: documentId,
-        original_word: originalWord,
-        normalized_word: normalizedWord,
-        translation: translation.trim(),
-        language_code: languageCode,
-        status: 'confirmed'
-      }, {
+      .upsert(payload, {
         onConflict: 'user_id,document_id,normalized_word,language_code'
       });
 
     if (error) {
       console.error('Error saving document translation:', error);
+      return false;
+    }
+
+    return true;
+  }
+
+  /** Remove a specific occurrence from a document translation. If none left, keep the row (no inline display) */
+  static async removeOccurrenceFromDocumentTranslation(
+    documentId: string,
+    normalizedWord: string,
+    occurrenceId: string,
+    languageCode: string = 'ro'
+  ): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { data, error } = await supabase
+      .from('word_translations')
+      .select('id, occurrence_ids')
+      .eq('user_id', user.id)
+      .eq('document_id', documentId)
+      .eq('normalized_word', normalizedWord)
+      .eq('language_code', languageCode)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching for removal:', error);
+      return false;
+    }
+
+    const current = (data?.occurrence_ids ?? []) as string[];
+    const next = current.filter((id) => id !== occurrenceId);
+
+    const { error: updateError } = await supabase
+      .from('word_translations')
+      .update({ occurrence_ids: next })
+      .eq('id', data?.id);
+
+    if (updateError) {
+      console.error('Error removing occurrence id:', updateError);
       return false;
     }
 

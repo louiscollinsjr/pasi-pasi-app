@@ -20,6 +20,8 @@
   // New props to drive pronunciation rules dynamically
   export let targetLang: string = 'ro';
   export let nativeLang: string = 'en';
+  // Occurrence IDs that should temporarily show document translation inline
+  export let tempShownIds: string[] = [];
 
   // Compute rules from target and native languages
   $: rules = getPronunciationRules(targetLang, nativeLang);
@@ -105,7 +107,7 @@
                 </PopoverTrigger>
                 <PopoverContent>
                   <div class="flex flex-col gap-2">
-                    <Button on:click={() => markKnown(word)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
+                    <Button type="button" on:click={() => markKnown(word)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
                     <form on:submit|preventDefault={() => saveDocumentTranslationOnly(word)}>
                       <Input
                         placeholder="Add translation"
@@ -115,18 +117,18 @@
                         autofocus
                       />
                       <div class="flex gap-2">
-                        <Button type="submit" variant="default" class="flex-1 text-xl font-bold">Update</Button>
+                        <Button type="button" on:click={() => saveDocumentTranslationOnly(word)} variant="default" class="flex-1 text-xl font-bold">Update</Button>
                         {#if hasTranslationForWord(word)}
-                          <Button on:click={() => deleteTranslation(word)} variant="destructive" class="text-xl font-bold">Delete</Button>
+                          <Button type="button" on:click={() => deleteTranslation(word)} variant="destructive" class="text-xl font-bold">Delete</Button>
                         {/if}
                       </div>
                     </form>
                   </div>
                 </PopoverContent>
               </Popover>
-              {#if getWordVocabulary(word)?.eng_translation}
+              {#if getWordVocabulary(word)?.known && getWordVocabulary(word)?.eng_translation}
                 <span class="font-libreBaskerville my-1 block text-[12px] font-bold tracking-wide text-gray-200">{getWordVocabulary(word)?.eng_translation}</span>
-              {:else if hasTranslationForWord(word)}
+              {:else if tempShownIds?.includes(`${paragraph.id}-${lIdx}-${wIdx}`) && hasTranslationForWord(word)}
                 <span class="font-libreBaskerville my-1 block text-[12px] font-bold tracking-wide text-gray-500">{getTranslationForWord(word)}</span>
               {/if}
             </span>{' '}
@@ -204,7 +206,7 @@
                   <PopoverContent>
                     <div class="flex flex-col gap-2">
                       <!-- Button to mark word as known -->
-                      <Button on:click={() => markKnown(word)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
+                      <Button type="button" on:click={() => markKnown(word)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
                       
                       <!-- Form for adding/updating translation -->
                       <form on:submit|preventDefault={() => saveDocumentTranslationOnly(word)}>
@@ -216,9 +218,9 @@
                           autofocus
                         />
                         <div class="flex gap-2">
-                          <Button type="submit" variant="default" class="flex-1 text-xl font-bold">Update</Button>
+                          <Button type="button" on:click={() => saveDocumentTranslationOnly(word)} variant="default" class="flex-1 text-xl font-bold">Update</Button>
                           {#if hasTranslationForWord(word)}
-                            <Button on:click={() => deleteTranslation(word)} variant="destructive" class="text-xl font-bold">Delete</Button>
+                            <Button type="button" on:click={() => deleteTranslation(word)} variant="destructive" class="text-xl font-bold">Delete</Button>
                           {/if}
                         </div>
                       </form>
@@ -227,11 +229,11 @@
                 </Popover>
                 
                 <!-- Display translation if available -->
-                {#if getWordVocabulary(word)?.eng_translation}
+                {#if getWordVocabulary(word)?.known && getWordVocabulary(word)?.eng_translation}
                   <span class="my-1 block text-[12px] font-bold tracking-wide text-gray-200">
                     {getWordVocabulary(word)?.eng_translation}
                   </span>
-                {:else if hasTranslationForWord(word)}
+                {:else if tempShownIds?.includes(`${paragraph.id}-s${sIdx}-${wIdx}`) && hasTranslationForWord(word)}
                   <span class=" my-2 mt-4 block text-xl font-bold tracking-wide text-gray-900">
                     {getTranslationForWord(word)}
                   </span>

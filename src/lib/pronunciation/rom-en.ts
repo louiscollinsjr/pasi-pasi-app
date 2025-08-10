@@ -44,6 +44,7 @@ export const rm_en_rules: PronunciationRule[] = [
 { pattern: 'ei', phoneme: 'ay', explanation: "like 'ay' in 'say' or 'day'; a glide from 'e' to 'i'" },
 { pattern: 'oi', phoneme: 'oy', explanation: "like 'oy' in 'boy' or 'toy'" },
 { pattern: 'ia', phoneme: 'ya', explanation: "like 'ya' in 'yacht'; occurs in some borrowed words" },
+{ pattern: 'ii', phoneme: 'ee', explanation: "like 'ee' in 'see'; occurs in some borrowed words" },
 
   // --- Standard Consonants (mostly as in English) ---
   // Included for completeness.

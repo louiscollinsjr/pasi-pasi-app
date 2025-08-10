@@ -18,6 +18,7 @@ export const ro_en_rules: PronunciationRule[] = [
   { pattern: 'ie', phoneme: 'yeh', explanation: "like 'ye' in 'yes'" },
   { pattern: 'io', phoneme: 'yo', explanation: "like 'yo' in 'yogurt'" },
   { pattern: 'iu', phoneme: 'you', explanation: "like the word 'you'" },
+  { pattern: 'ii', phoneme: 'ee', explanation: "like 'ee' in 'see'" },
 
   // Word-initial behaviors
   // Many native Romanian words beginning with 'e' sound like English 'ye' (e.g., 'este' ≈ 'yeste').

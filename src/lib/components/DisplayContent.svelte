@@ -25,6 +25,29 @@
 
   // Compute rules from target and native languages
   $: rules = getPronunciationRules(targetLang, nativeLang);
+
+  // Segment helper to preserve kerning: build contiguous matched/unmatched runs
+  type Segment = { text: string; matched: boolean; pronunciation?: string };
+  function buildSegments(word: string, matches: Array<{ startIndex: number; endIndex: number; pronunciation: string }>): Segment[] {
+    if (!matches || matches.length === 0) return [{ text: word, matched: false }];
+    const segments: Segment[] = [];
+    let i = 0;
+    // Sort matches by start index to be safe
+    const sorted = [...matches].sort((a, b) => a.startIndex - b.startIndex);
+    for (const m of sorted) {
+      if (i < m.startIndex) {
+        // push unmatched run before match
+        segments.push({ text: word.slice(i, m.startIndex), matched: false });
+      }
+      // push matched run
+      segments.push({ text: word.slice(m.startIndex, m.endIndex + 1), matched: true, pronunciation: m.pronunciation });
+      i = m.endIndex + 1;
+    }
+    if (i < word.length) {
+      segments.push({ text: word.slice(i), matched: false });
+    }
+    return segments;
+  }
 </script>
 
 <div>
@@ -49,46 +72,20 @@
                     {@const matches = word.pronunciationMatches ?? findPronunciationMatches(word, rules)}
                     
                     {#if matches.length > 0}
-                        <!-- Container for pronunciation guide elements -->
+                        <!-- Container for pronunciation guide elements: render contiguous segments -->
                         <div class="inline-flex flex-col items-start">
-                            <div class="flex">
-                                <!-- Iterate through each character in the word -->
-                                {#each word.split('') as char, charIdx}
-                                    <!-- Check if current character starts a pronunciation match -->
-                                    {#if matches.some((m) => m.startIndex === charIdx)}
-                                        <!-- Get the specific match starting at this character index -->
-                                        {@const match = matches.find((m) => m.startIndex === charIdx)}
-                                        
-                                        <!-- Pronunciation guide container for matched segment -->
-                                        <span class="pronunciation-guide-text inline-flex flex-col items-center" 
-                                          style="flex: 0 0 auto; width: {match.endIndex - match.startIndex + 1}ch;">
-                                        
-                                        <!-- Render matched characters with red color -->
-                                        <span class="flex">
-                                            {#each Array(match.endIndex - match.startIndex + 1) as _, i}
-                                                <span class="{match ? 'pronunciation-guide-matched' : ''} ">
-                                                    {word[charIdx + i]}
-                                                </span>
-                                            {/each}
-                                        </span>
-                                        
-                                        <!-- Pronunciation text below matched characters -->
-                                        <span class="pronunciation-guide-sounds mt-1 rounded px-1 py-0.5 text-center whitespace-nowrap" 
-                                              style="display:inline-block;min-width:100%;">
-                                            {match.pronunciation}
-                                        </span>
-                                    </span>
-                        
-                    {:else if !matches.some((m) => charIdx > m.startIndex && charIdx <= m.endIndex)}
-                        <!-- Regular character rendering (no pronunciation guide) -->
-                        <span class="pronunciation-guide-text inline-flex flex-col items-center">
-                            <span>{char}</span>
-                            <!-- Spacer for consistent alignment with guided characters -->
-                                            <span class="mt-1 h-4 text-[10px]"></span>
-                                        </span>
-                                    {/if}
-                                {/each}
-                            </div>
+                          <div class="flex">
+                            {#each buildSegments(word, matches) as seg}
+                              <span class="pronunciation-guide-text inline-flex flex-col items-center" style="flex: 0 0 auto;">
+                                <span class={seg.matched ? 'pronunciation-guide-matched' : ''}>{seg.text}</span>
+                                {#if seg.matched}
+                                  <span class="pronunciation-guide-sounds mt-1 rounded px-1 py-0.5 text-center whitespace-nowrap" style="display:inline-block;min-width:100%;box-sizing:border-box;">{seg.pronunciation}</span>
+                                {:else}
+                                  <span class="mt-1 h-4 text-[10px]"></span>
+                                {/if}
+                              </span>
+                            {/each}
+                          </div>
                         </div>
                     {:else}
                         <!-- Fallback: Show plain word if no pronunciation matches -->
@@ -167,25 +164,15 @@
                       {#if matches.length > 0}
                         <div class="inline-flex flex-col items-start">
                           <div class="flex">
-                            {#each word.split('') as char, charIdx}
-                              {@const currentMatch = matches.find((m) => m.startIndex === charIdx)}
-                              {#if currentMatch}
-                                <!-- Matched character sequence with pronunciation -->
-                                <span class="inline-flex flex-col items-center" style="flex: 0 0 auto; width: {currentMatch.endIndex - currentMatch.startIndex + 1}ch;">
-                                  <span class="flex">
-                                    {#each Array(currentMatch.endIndex - currentMatch.startIndex + 1) as _, i}
-                                      <span  class="{currentMatch ? 'pronunciation-guide-matched' : ''} ">{word[charIdx + i]}</span>
-                                    {/each}
-                                  </span>
-                                  <!-- Pronunciation text display -->
-                                  <span class="pronunciation-guide-sounds mt-1 rounded px-1 py-0.5 text-center whitespace-nowrap " style="display:inline-block;min-width:100%;">
-                                    {currentMatch.pronunciation}
-                                  </span>
-                                </span>
-                              {:else if !matches.some((m) => charIdx > m.startIndex && charIdx <= m.endIndex)}
-                                <!-- Regular character without pronunciation guide -->
-                                <span class="pronunciation-guide-text">{char}</span>
-                              {/if}
+                            {#each buildSegments(word, matches) as seg}
+                              <span class="inline-flex flex-col items-center" style="flex: 0 0 auto;">
+                                <span class={seg.matched ? 'pronunciation-guide-matched' : ''}>{seg.text}</span>
+                                {#if seg.matched}
+                                  <span class="pronunciation-guide-sounds mt-1 rounded px-1 py-0.5 text-center whitespace-nowrap " style="display:inline-block;min-width:100%;box-sizing:border-box;">{seg.pronunciation}</span>
+                                {:else}
+                                  <span class="mt-1 h-4 text-[10px]"></span>
+                                {/if}
+                              </span>
                             {/each}
                           </div>
                         </div>

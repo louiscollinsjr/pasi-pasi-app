@@ -3,6 +3,7 @@
   import { Input } from '$lib/components/ui/input/index';
   import Button from '$lib/components/ui/button/button.svelte';
   import { getPronunciationRules, findPronunciationMatches } from '$lib/pronunciation';
+  import { tick } from 'svelte';
 
   export let paragraphs = [];
   export let readingMode = true;
@@ -64,7 +65,17 @@
                   type="button"
                   class="relative m-0 cursor-pointer border-none bg-transparent p-0 {wIdx === 0 ? '' : 'px-1'} select-text"
                   style="text-decoration-line: none; text-decoration-color: {getWordVocabulary(word)?.known ? 'gray' : 'green'}; text-decoration-style: dotted; text-decoration-opacity: {getWordVocabulary(word)?.known ? 0.2 : 0.5};"
-                  on:click={(e) => { e.stopPropagation(); handleWordClick(`${paragraph.id}-${lIdx}-${wIdx}`, word); }}
+                  on:click={async (e) => {
+                    e.stopPropagation();
+                    // Let parent open the popover and possibly reset input
+                    handleWordClick(`${paragraph.id}-${lIdx}-${wIdx}`, word);
+                    await tick();
+                    // Now prefill from existing translation if available; fallback to vocabulary eng_translation
+                    translationInput = hasTranslationForWord(word)
+                      ? getTranslationForWord(word)
+                      : (getWordVocabulary(word)?.eng_translation ?? '');
+                    updateDocumentTranslation(word, translationInput, `${paragraph.id}-${lIdx}-${wIdx}`);
+                  }}
                 >
                   {#if showPronunciationGuide}
                     <!-- Pronunciation guide rendering logic: -->
@@ -105,7 +116,7 @@
                 <PopoverContent>
                   <div class="flex flex-col gap-2">
                     <Button type="button" on:click={() => markKnown(word)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
-                    <form on:submit|preventDefault={() => saveDocumentTranslationOnly(word, `${paragraph.id}-${lIdx}-${wIdx}`)}>
+                    <form on:submit|preventDefault={() => { saveDocumentTranslationOnly(word, `${paragraph.id}-${lIdx}-${wIdx}`); editingWord = null; }}>
                       <Input
                         placeholder="Add translation"
                         bind:value={translationInput}
@@ -117,6 +128,7 @@
                         <Button type="button" on:click={() => {
                           console.log('Reading mode occurrenceId:', `${paragraph.id}-${lIdx}-${wIdx}`);
                           saveDocumentTranslationOnly(word, `${paragraph.id}-${lIdx}-${wIdx}`);
+                          editingWord = null;
                         }} variant="default" class="flex-1 text-xl font-bold">Update</Button>
                         {#if hasTranslationForWord(word)}
                           <Button type="button" on:click={() => deleteTranslation(word)} variant="destructive" class="text-xl font-bold">Delete</Button>
@@ -156,7 +168,17 @@
                     type="button"
                     class="pronunciation-guide-text relative m-0 cursor-pointer border-none bg-transparent p-0 {wIdx === 0 ? '' : 'px-1'} font-normal select-text"
                     style="text-decoration-line: none; text-decoration-color: {getWordVocabulary(word)?.known ? 'gray' : 'green'}; text-decoration-style: dotted; text-decoration-opacity: {getWordVocabulary(word)?.known ? 0.2 : 0.5};"
-                    on:click={(e) => { e.stopPropagation(); handleWordClick(`${paragraph.id}-s${sIdx}-${wIdx}`, word); }}
+                    on:click={async (e) => {
+                      e.stopPropagation();
+                      // Let parent open the popover and possibly reset input
+                      handleWordClick(`${paragraph.id}-s${sIdx}-${wIdx}`, word);
+                      await tick();
+                      // Now prefill from existing translation if available; fallback to vocabulary eng_translation
+                      translationInput = hasTranslationForWord(word)
+                        ? getTranslationForWord(word)
+                        : (getWordVocabulary(word)?.eng_translation ?? '');
+                      updateDocumentTranslation(word, translationInput, `${paragraph.id}-s${sIdx}-${wIdx}`);
+                    }}
                   >
                     <!-- Pronunciation guide rendering -->
                     {#if showPronunciationGuide}
@@ -199,7 +221,7 @@
                       <Button type="button" on:click={() => markKnown(word)} variant="ghost" class="mb-2 w-full text-xl">Mark as Known</Button>
                       
                       <!-- Form for adding/updating translation -->
-                      <form on:submit|preventDefault={() => saveDocumentTranslationOnly(word, `${paragraph.id}-s${sIdx}-${wIdx}`)}>
+                      <form on:submit|preventDefault={() => { saveDocumentTranslationOnly(word, `${paragraph.id}-s${sIdx}-${wIdx}`); editingWord = null; }}>
                         <Input
                           placeholder="Add translation"
                           bind:value={translationInput}
@@ -211,6 +233,7 @@
                           <Button type="button" on:click={() => {
                             console.log('Non-reading mode occurrenceId:', `${paragraph.id}-s${sIdx}-${wIdx}`);
                             saveDocumentTranslationOnly(word, `${paragraph.id}-s${sIdx}-${wIdx}`);
+                            editingWord = null;
                           }} variant="default" class="flex-1 text-xl font-bold">Update</Button>
                           {#if hasTranslationForWord(word)}
                             <Button type="button" on:click={() => deleteTranslation(word)} variant="destructive" class="text-xl font-bold">Delete</Button>

@@ -252,7 +252,6 @@
     }
     
     await updateDocumentTranslation(word, translationInput, occurrenceId);
-    translationInput = '';
     editingWord = null;
     console.log('[saveDocumentTranslationOnly] clearing input & closing popover');
   }
@@ -278,7 +277,6 @@
         return rest;
       });
     }
-    translationInput = '';
     // Remove temporary inline display for the current occurrence (if any)
     if (editingWord) {
       const next = new Set(tempShownTranslations);
@@ -331,8 +329,7 @@
     }
 
     editingWord = null;
-    translationInput = '';
-    console.log('[saveTranslation] completed, input cleared');
+    console.log('[saveTranslation] completed');
     // Once known, no need to keep a temp occurrence-specific display
     tempShownTranslations = new Set();
   }

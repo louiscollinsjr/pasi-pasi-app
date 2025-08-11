@@ -76,6 +76,11 @@ export function findPronunciationMatches(word: string, rules: PronunciationRule[
         const substr = lowerWord.slice(i);
         // Ensure regex is tested from beginning of substring
         const re = rule.pattern;
+        const src = re.source || '';
+        // If the rule is anchored with ^, only allow it at the beginning of the word
+        if (src.startsWith('^') && i !== 0) {
+          continue;
+        }
         if (re.global) re.lastIndex = 0; // reset if global
         const m = substr.match(re);
         if (m && m.index === 0) {

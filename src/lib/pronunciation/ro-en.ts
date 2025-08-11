@@ -2,7 +2,10 @@ import type { PronunciationRule } from './types';
 
 // Exceptions to initial 'e' -> 'ye' (names/foreign origins)
 const exceptions = ['eva', 'elena', 'emanuel', 'erasmus', 'europa'];
-const exceptionRegex = new RegExp(`\\be(?!(${exceptions.join('|')})\\b)`);
+// Use suffixes because the lookahead starts AFTER the matched 'e'
+const exceptionSuffixes = ['va', 'lena', 'manuel', 'rasmus', 'uropa', 'eva', 'vei'];
+// Anchored so it only triggers at the beginning of the word and outranks the single-letter 'e' rule
+const initialERegex = new RegExp(`^e(?!(${exceptionSuffixes.join('|')})\\b)`, 'iu');
 
 // Pronunciation rules for native English speakers learning Romanian.
 export const ro_en_rules: PronunciationRule[] = [
@@ -12,18 +15,19 @@ export const ro_en_rules: PronunciationRule[] = [
   { pattern: 'oi', phoneme: 'oy', explanation: "like 'boy'" },
   { pattern: 'ui', phoneme: 'wee', explanation: "like 'week', but faster" }, // 'oo-ee' feels clunky
   { pattern: 'au', phoneme: 'ow', explanation: "like 'cow'" },
-  { pattern: 'eu', phoneme: 'eh-oo', explanation: "like 'eh-oo' quickly blended" }, // keep original?
+  { pattern: 'ea', phoneme: 'ya', explanation: "like 'ya' in 'yard' (e.g., 'Ea' is 'ya')" },
+  { pattern: 'eu', phoneme: 'yeh-oo', explanation: "like 'eh-oo' quickly blended" }, // keep original?
   { pattern: 'ou', phoneme: 'oh', explanation: "like 'go'" }, // 'oh-oo' isn't how it's said
   { pattern: 'ia', phoneme: 'ya', explanation: "like 'ya' in 'yard'" },
   { pattern: 'ie', phoneme: 'yeh', explanation: "like 'ye' in 'yes'" },
   { pattern: 'io', phoneme: 'yo', explanation: "like 'yo' in 'yogurt'" },
-  { pattern: 'iu', phoneme: 'you', explanation: "like the word 'you'" },
+  { pattern: 'iu', phoneme: 'ee-you', explanation: "like the word 'you'" },
   { pattern: 'ii', phoneme: 'ee', explanation: "like 'ee' in 'see'" },
 
   // Word-initial behaviors
   // Many native Romanian words beginning with 'e' sound like English 'ye' (e.g., 'este' ≈ 'yeste').
   // Exceptions: names/foreign words like 'Eva', 'Elena' retain plain 'eh'.
-  { pattern: exceptionRegex, phoneme: 'ye', explanation: "like 'yes' — appears at the beginning of many words; not for names/foreign origins (e.g., 'Eva', 'Elena', 'Emanuel', 'Erasmus', 'Europa')" },
+  { pattern: initialERegex, phoneme: 'yeh', explanation: "like 'yes' — appears at the beginning of many words; not for names/foreign origins (e.g., 'Eva', 'Elena', 'Emanuel', 'Erasmus', 'Europa')" },
 
   // Special Romanian vowels
   { pattern: 'ă', phoneme: 'uh', explanation: "like 'a' in 'about' (schwa sound)" },

@@ -8,11 +8,12 @@
 	import { userProfile } from '$lib/stores/userProfileStore';
 	import { VocabularyService } from '$lib/services/vocabularyService';
 	import type { VocabularyWord, WordTranslation } from '$lib/services/vocabularyService';
-	import { ArrowLeft, BarChart3, Text, Eye, EyeOff, Focus, Speech } from 'lucide-svelte';
+	import { ArrowLeft, Text, Eye, EyeOff, Focus, Speech } from 'lucide-svelte';
 	import { writable, get } from 'svelte/store';
 	import { onMount } from 'svelte';
 	import { tick } from 'svelte';
 	import DisplayContent from './DisplayContent.svelte';
+	import LessonMetrics from './LessonMetrics.svelte';
 
 	export let lesson: any;
 	export let collection: any = null;
@@ -469,20 +470,13 @@
         {/if}
 			</h1>
 
-			<!-- Lesson Metrics - show compact version when sticky -->
-				{#if lessonMetrics}
-					<div class="flex items-center gap-4 text-sm text-gray-500 transition-all duration-300 ease-in-out {isHeaderSticky ? 'opacity-70' : 'opacity-100'}">
-						<div class="flex items-center gap-1">
-							<BarChart3 size={14} class="text-gray-400" />
-							<span class="hidden sm:inline">{lessonMetrics.comprehensionRate}%</span>
-						</div>
-						<div class="h-4 w-px bg-gray-200"></div>
-						<div class="flex items-center gap-1">
-							<span class="hidden sm:inline">{lessonMetrics.knownWords}/{lessonMetrics.totalWords}</span>
-							<span class="text-xs text-gray-400">words</span>
-						</div>
-					</div>
-				{/if}
+			<!-- Lesson Metrics (DB-backed) -->
+			<LessonMetrics
+				lessonId={lessonId}
+				{lesson}
+				languageCode={lesson?.language_code || 'ro'}
+				{isHeaderSticky}
+			/>
 			</div>
 		</div>
 	</div>
